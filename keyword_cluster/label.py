@@ -6,11 +6,28 @@ _COMP_RANK = {"HIGH": 3, "MEDIUM": 2, "LOW": 1, "UNSPECIFIED": 0, "UNKNOWN": 0}
 
 
 def _label(members) -> str:
-    counter = Counter()
-    for m in members:
-        counter.update(set(tokens(m["text"])))
-    common = [w for w, _ in counter.most_common(3)]
-    return " ".join(common) if common else members[0]["text"]
+    """A readable label for a cluster.
+
+    Prefers the most common contiguous **bigram** across members — that reads as
+    a phrase ("rower damski", "kask rowerowy") instead of a bag of the most
+    frequent tokens ("rowerowe rowerowy rowery", which just repeats one stem).
+    Falls back to the most common single token, then to the representative
+    keyword. This is a sensible default; a skill/LLM renames it from the members.
+    """
+    toks = [tokens(m["text"]) for m in members]
+    bigrams = Counter()
+    for t in toks:
+        bigrams.update(set(zip(t, t[1:])))  # per-member set → count members, not repeats
+    if bigrams:
+        (a, b), cnt = bigrams.most_common(1)[0]
+        if cnt >= 2:
+            return f"{a} {b}"
+    unigrams = Counter()
+    for t in toks:
+        unigrams.update(set(t))
+    if unigrams:
+        return unigrams.most_common(1)[0][0]
+    return _representative(members)
 
 
 def _representative(members) -> str:
