@@ -10,3 +10,8 @@ __pycache__/
 
 # page-monitor snapshots (local state)
 page_monitor/snapshots/
+
+# Dedicated keyword_cluster heavy venv (machine-specific)
+keyword_cluster/.venv/
+keyword_cluster/outputs/*.png
+keyword_cluster/.env
