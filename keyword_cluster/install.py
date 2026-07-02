@@ -1,4 +1,4 @@
-"""One-time setup of the isolated heavy venv (numpy, hdbscan, umap-learn, rapidfuzz)."""
+"""One-time setup of the isolated heavy venv (numpy, hdbscan, umap-learn, rapidfuzz, matplotlib)."""
 import pathlib
 import shutil
 import subprocess

@@ -7,9 +7,17 @@ def scatter(vectors, labels, texts, out_dir="keyword_cluster/outputs"):
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     import numpy as np
-    import umap
-    coords = umap.UMAP(n_neighbors=min(15, len(vectors) - 1), min_dist=0.1,
-                       metric="euclidean", random_state=42).fit_transform(np.asarray(vectors))
+    arr = np.asarray(vectors, dtype=float)
+    if len(arr) < 3:
+        # UMAP cannot produce a meaningful 2D embedding for <3 points; use a trivial layout.
+        coords = np.zeros((len(arr), 2), dtype=float)
+        for i in range(len(arr)):
+            coords[i, 0] = float(i)
+    else:
+        import umap
+        n_neighbors = max(2, min(15, len(arr) - 1))
+        coords = umap.UMAP(n_neighbors=n_neighbors, min_dist=0.1,
+                           metric="euclidean", random_state=42).fit_transform(arr)
     fig, ax = plt.subplots(figsize=(12, 9))
     labs = np.asarray(labels)
     for lab in sorted(set(labs)):

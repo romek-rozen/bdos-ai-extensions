@@ -61,7 +61,10 @@ def _semantic_cluster(members, *, min_cluster_size, provider, model, whitening, 
     viz_path = None
     if viz:
         from .viz import scatter
-        viz_path = scatter(vecs, labels, texts)
+        try:
+            viz_path = scatter(vecs, labels, texts)
+        except Exception:
+            viz_path = None
     return {"ok": True, "method_used": "semantic", "clusters": clusters, "noise": noise, "viz_path": viz_path}
 
 

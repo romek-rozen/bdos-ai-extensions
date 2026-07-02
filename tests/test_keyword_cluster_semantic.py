@@ -128,5 +128,39 @@ class TestHdbscan(unittest.TestCase):
         self.assertEqual(len({l for l in labels if l >= 0}), 2)
 
 
+class TestVizFailureIsolated(unittest.TestCase):
+    """A viz render failure must never sink otherwise-valid ok=True clusters."""
+
+    def test_scatter_exception_does_not_sink_result(self):
+        from keyword_cluster import api
+        members = [{"text": "a"}, {"text": "b"}]
+        with mock.patch("keyword_cluster.embed.embed", return_value=[[0.0], [1.0]]), \
+                mock.patch("keyword_cluster.cluster_graph.hdbscan_cluster", return_value=[0, 0]), \
+                mock.patch("keyword_cluster.viz.scatter", side_effect=ValueError("boom")):
+            result = api._semantic_cluster(
+                members, min_cluster_size=2, provider="openai", model="m",
+                whitening=None, whitening_background=None, viz=True)
+        self.assertTrue(result["ok"])
+        self.assertIsNone(result["viz_path"])
+        self.assertEqual(len(result["clusters"]), 1)
+
+
+@unittest.skipUnless(HAVE_NUMPY, "numpy required")
+class TestScatterTinyInput(unittest.TestCase):
+    """viz.scatter must not raise for <3 points and must still return a PNG path."""
+
+    def test_tiny_inputs_return_path(self):
+        try:
+            import matplotlib  # noqa: F401
+        except ImportError:
+            self.skipTest("matplotlib required")
+        import tempfile
+        from keyword_cluster.viz import scatter
+        for n in (1, 2):
+            with tempfile.TemporaryDirectory() as d:
+                path = scatter([[0.1, 0.2]] * n, [0] * n, ["k"] * n, out_dir=d)
+                self.assertTrue(os.path.exists(path))
+
+
 if __name__ == "__main__":
     unittest.main()
