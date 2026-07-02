@@ -6,7 +6,7 @@ import sys
 
 _PKG_DIR = pathlib.Path(__file__).resolve().parent
 _VENV = _PKG_DIR / ".venv"
-_PACKAGES = ["numpy", "scikit-learn", "hdbscan", "umap-learn", "rapidfuzz"]
+_PACKAGES = ["numpy", "scikit-learn", "hdbscan", "umap-learn", "rapidfuzz", "matplotlib"]
 
 
 def venv_python():

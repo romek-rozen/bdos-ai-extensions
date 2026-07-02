@@ -38,7 +38,7 @@ def _resolve_method(method, provider=None, model=None):
     return "lexical"
 
 
-def _semantic_cluster(members, *, min_cluster_size, provider, model, whitening, whitening_background):
+def _semantic_cluster(members, *, min_cluster_size, provider, model, whitening, whitening_background, viz=False):
     from .embed import embed
     from .whiten import whiten_batch, load_background, apply_background
     from .cluster_graph import hdbscan_cluster
@@ -58,7 +58,11 @@ def _semantic_cluster(members, *, min_cluster_size, provider, model, whitening, 
             groups.setdefault(lab, []).append(members[i])
     clusters = [build_cluster(cid, grp) for cid, grp in enumerate(groups.values())]
     clusters.sort(key=lambda c: (c["total_volume"] or 0, c["size"]), reverse=True)
-    return {"ok": True, "method_used": "semantic", "clusters": clusters, "noise": noise, "viz_path": None}
+    viz_path = None
+    if viz:
+        from .viz import scatter
+        viz_path = scatter(vecs, labels, texts)
+    return {"ok": True, "method_used": "semantic", "clusters": clusters, "noise": noise, "viz_path": viz_path}
 
 
 def cluster(keywords, *, method="auto", threshold=None, min_cluster_size=2,
@@ -74,7 +78,8 @@ def cluster(keywords, *, method="auto", threshold=None, min_cluster_size=2,
     if resolved == "semantic":
         try:
             return _semantic_cluster(members, min_cluster_size=min_cluster_size, provider=provider,
-                                     model=model, whitening=whitening, whitening_background=whitening_background)
+                                     model=model, whitening=whitening, whitening_background=whitening_background,
+                                     viz=viz)
         except (ImportError, RuntimeError) as e:
             return {"ok": False, "error": f"semantic tier failed: {e}. Run install() and configure .env."}
 
