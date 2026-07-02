@@ -20,6 +20,14 @@ All notable changes to this repo. Dates are ISO (YYYY-MM-DD).
 - **ngram_pro** (`ext-ngram-pro`) — n-gram waste analysis of search terms → negative
   keywords: nScore (wasted spend), Cost Savings, Conv. Loss, Blocked Keywords/Search Terms,
   vs-average deltas, optional GA4 engagement columns, ranked negative recommendations.
+- **d4s** (`ext-d4s`) — thin DataForSEO REST client (pure stdlib, independent of the
+  `dfs-mcp` MCP server): generic `Client().call(path, payload)` + task-mode primitives
+  (`task`/`task_submit`/`task_fetch`/`tasks_ready`) with retry on 429/5xx; env credentials
+  (`DATAFORSEO_USERNAME`/`DATAFORSEO_LOGIN` + `DATAFORSEO_PASSWORD`). Ads-focused wrappers:
+  `search_volume`, `keywords_for_site`, `keywords_for_keywords`, `ad_traffic_by_keywords`,
+  `google_trends`, `keyword_ideas`, `keyword_suggestions`, `keyword_difficulty`,
+  `search_intent`, `serp`, `serp_competitors`, `autocomplete`, `ads_advertisers`/`ads_search`
+  (Ads Transparency), `products`/`sellers` (Shopping), `locations`/`languages`. Read-only.
 - **install_into_bdos.py** — one-command self-install (symlink/copy) into a BDOS `my/` dir.
 - **CI** on macOS + Windows; unit tests for path logic and marginal_ers math.
 - Docs: README, AGENTS.md, GETTING_STARTED, EXTENSIONS reference, CONTRIBUTING.

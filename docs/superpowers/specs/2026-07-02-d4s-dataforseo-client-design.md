@@ -67,9 +67,14 @@ Paths computed relative to `__file__` for portability. No local state written.
 - **Auth:** HTTP Basic from env vars above; `Authorization: Basic base64(user:pass)`.
 - **Generic `call(path, payload=None, method="POST")`** — hits ANY live DataForSEO endpoint,
   e.g. `call("/v3/dataforseo_labs/google/keyword_ideas/live", [{...}])`.
-- **`task(base_path, payload, timeout=..., interval=...)`** — for endpoints without a `live`
-  variant: POSTs to `{base_path}/task_post`, polls `{base_path}/task_get/advanced/{id}` until
-  ready or timeout, returns the same envelope shape as `call()`.
+- **`task(base_path, payload, timeout=..., interval=...)`** — blocking convenience for
+  endpoints without a `live` variant: POSTs to `{base_path}/task_post`, polls
+  `{base_path}/task_get/advanced/{id}` until ready or timeout, returns the same envelope shape
+  as `call()`. Built on the primitives below.
+- **Deferred pooling primitives** — submit now, collect later (cheaper task/queue mode, bulk):
+  - `task_submit(base_path, payload)` → `{"ok": True, "task_id": ...}` (bare `task_post`, no wait)
+  - `task_fetch(base_path, task_id)` → single `task_get/advanced/{id}` (envelope shape)
+  - `tasks_ready(base_path)` → list of task ids ready to collect (`{base_path}/tasks_ready`)
 - **Retry** with capped exponential backoff on 429 / 5xx (fixed max attempts, stdlib only).
 - **Envelope handling:** returns
   `{"ok": True, "cost": <float>, "tasks": [...], "result": [...], "raw": {<full body>}}`
