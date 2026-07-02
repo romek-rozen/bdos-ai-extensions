@@ -2,6 +2,17 @@
 
 All notable changes to this repo. Dates are ISO (YYYY-MM-DD).
 
+## 2026-07-02 — repo `0.3.0`
+
+### Changed
+- **keyword_cluster: readable `viz=True` UMAP render.** `viz.scatter()` now draws noise faint
+  underneath, smaller clusters in a light tint, and only the top-N (default 15) largest clusters
+  colored + numbered, with a side legend mapping each number to a representative phrase (member
+  nearest the centroid) and cluster size. Replaces the old render (N recycled matplotlib colors +
+  noise drawn on top + a meaningless `cluster 0..N` legend), which was unreadable past ~10 clusters.
+  UMAP now projects with `metric="cosine"` to match the whitened-cosine space the labels come from.
+  New optional `top_n` arg on `scatter()`.
+
 ## 2026-07-02 — repo `0.2.1`
 
 ### Removed
