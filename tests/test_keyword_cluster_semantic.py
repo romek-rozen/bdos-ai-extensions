@@ -128,6 +128,7 @@ class TestHdbscan(unittest.TestCase):
         self.assertEqual(len({l for l in labels if l >= 0}), 2)
 
 
+@unittest.skipUnless(HAVE_NUMPY, "numpy required")
 class TestVizFailureIsolated(unittest.TestCase):
     """A viz render failure must never sink otherwise-valid ok=True clusters."""
 
