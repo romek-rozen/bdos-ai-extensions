@@ -112,5 +112,21 @@ class TestWhiten(unittest.TestCase):
         self.assertTrue(np.allclose(np.linalg.norm(W, axis=1), 1.0, atol=1e-6))
 
 
+@unittest.skipUnless(HAVE_NUMPY, "numpy required")
+class TestHdbscan(unittest.TestCase):
+    def test_two_dense_blobs(self):
+        try:
+            from keyword_cluster.cluster_graph import hdbscan_cluster
+            import hdbscan  # noqa: F401
+        except ImportError:
+            self.skipTest("hdbscan required")
+        import numpy as np
+        rng = np.random.default_rng(1)
+        a = rng.normal(0, 0.02, size=(20, 5))
+        b = rng.normal(5, 0.02, size=(20, 5))
+        labels = hdbscan_cluster(np.vstack([a, b]), min_cluster_size=5)
+        self.assertEqual(len({l for l in labels if l >= 0}), 2)
+
+
 if __name__ == "__main__":
     unittest.main()

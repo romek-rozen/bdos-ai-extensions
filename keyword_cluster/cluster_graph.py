@@ -20,3 +20,11 @@ def union_find_cluster(texts, sim_fn, threshold: float):
     for i in range(n):
         groups.setdefault(_find(parent, i), []).append(i)
     return list(groups.values())
+
+
+def hdbscan_cluster(vectors, min_cluster_size=2):
+    """Return HDBSCAN labels (-1 = noise). Imports hdbscan lazily."""
+    import hdbscan
+    import numpy as np
+    clusterer = hdbscan.HDBSCAN(min_cluster_size=max(2, min_cluster_size), metric="euclidean")
+    return clusterer.fit_predict(np.asarray(vectors, dtype=np.float64)).tolist()
