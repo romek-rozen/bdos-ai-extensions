@@ -2,6 +2,7 @@
 import json
 import os
 import pathlib
+import ssl
 import urllib.error
 import urllib.request
 
@@ -17,6 +18,19 @@ _DEFAULT_BASE = {
 }
 
 
+def _strip_surrounding_quotes(v: str) -> str:
+    """Drop one layer of matching surrounding quotes (common .env convention).
+
+    A key written as KEY="sk-..." must expose sk-..., not the literal quotes —
+    otherwise the Authorization header becomes `Bearer "sk-..."` and the
+    provider rejects it with 401.
+    """
+    v = v.strip()
+    if len(v) >= 2 and v[0] == v[-1] and v[0] in ("'", '"'):
+        return v[1:-1]
+    return v
+
+
 def _load_dotenv():
     """Minimal .env loader (no dependency); ignores comments/blank lines."""
     if not _ENV_FILE.exists():
@@ -26,12 +40,31 @@ def _load_dotenv():
         if not line or line.startswith("#") or "=" not in line:
             continue
         k, v = line.split("=", 1)
-        os.environ.setdefault(k.strip(), v.strip())
+        os.environ.setdefault(k.strip(), _strip_surrounding_quotes(v))
 
 
 def _yaml_defaults() -> dict:
-    import yaml
-    return yaml.safe_load(_CONFIG.read_text(encoding="utf-8")) if _CONFIG.exists() else {}
+    """Read the flat key: value config. Uses PyYAML when present, else a
+    minimal inline parser (no dependency) so unit tests run without PyYAML."""
+    if not _CONFIG.exists():
+        return {}
+    text = _CONFIG.read_text(encoding="utf-8")
+    try:
+        import yaml
+        return yaml.safe_load(text) or {}
+    except ModuleNotFoundError:
+        pass
+    out: dict = {}
+    for line in text.splitlines():
+        line = line.split("#", 1)[0].strip()
+        if not line or ":" not in line:
+            continue
+        k, v = line.split(":", 1)
+        v = _strip_surrounding_quotes(v.strip())
+        if v.lstrip("-").isdigit():
+            v = int(v)
+        out[k.strip()] = v
+    return out
 
 
 def load_config(overrides: dict | None = None) -> dict:
@@ -48,6 +81,21 @@ def load_config(overrides: dict | None = None) -> dict:
     return cfg
 
 
+def _ssl_context():
+    """TLS context backed by certifi's CA bundle.
+
+    The isolated heavy venv often lacks the system CA store, so HTTPS to
+    OpenRouter/OpenAI fails with CERTIFICATE_VERIFY_FAILED. Prefer certifi's
+    bundle; fall back to the default context when certifi is unavailable
+    (e.g. Ollama over plain http needs none).
+    """
+    try:
+        import certifi
+        return ssl.create_default_context(cafile=certifi.where())
+    except Exception:
+        return None
+
+
 def _http_post_json(url: str, payload: dict, headers: dict, timeout: int = 120) -> dict:
     """POST JSON and return the parsed JSON response. Raises RuntimeError on HTTP/URL errors."""
     req = urllib.request.Request(
@@ -56,8 +104,9 @@ def _http_post_json(url: str, payload: dict, headers: dict, timeout: int = 120) 
         headers={"Content-Type": "application/json", **headers},
         method="POST",
     )
+    context = _ssl_context() if url.lower().startswith("https") else None
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        with urllib.request.urlopen(req, timeout=timeout, context=context) as resp:
             return json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
         raise RuntimeError(

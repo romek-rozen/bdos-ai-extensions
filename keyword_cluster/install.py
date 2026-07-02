@@ -21,6 +21,7 @@ _PACKAGES = [
     "rapidfuzz",
     "matplotlib",
     "pyyaml",
+    "certifi",
 ]
 
 

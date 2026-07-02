@@ -186,3 +186,29 @@ class TestSemanticBadBackground(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestDotenvQuoteStrip(unittest.TestCase):
+    def test_strips_matching_surrounding_quotes(self):
+        from keyword_cluster.embed import _strip_surrounding_quotes as s
+        self.assertEqual(s('"sk-abc"'), "sk-abc")
+        self.assertEqual(s("'sk-abc'"), "sk-abc")
+        self.assertEqual(s("sk-abc"), "sk-abc")          # unquoted untouched
+        self.assertEqual(s('  "sk-abc"  '), "sk-abc")     # trims then unquotes
+        self.assertEqual(s('"'), '"')                     # lone quote untouched
+
+
+@unittest.skipUnless(HAVE_NUMPY, "numpy required")
+class TestWhitenPreservesSeparation(unittest.TestCase):
+    def test_default_shrinkage_keeps_two_blobs_apart(self):
+        from keyword_cluster.whiten import whiten_batch
+        import numpy as np
+        rng = np.random.default_rng(3)
+        a = rng.normal(0, 0.05, size=(12, 64)) + 3.0
+        b = rng.normal(0, 0.05, size=(12, 64)) - 3.0
+        W = whiten_batch(np.vstack([a, b]))   # default shrinkage
+        wa, wb = W[:12], W[12:]
+        within = float(np.mean(wa @ wa.T))
+        between = float(np.mean(wa @ wb.T))
+        # well-regularized whitening must not scramble a clean separation
+        self.assertGreater(within, between)

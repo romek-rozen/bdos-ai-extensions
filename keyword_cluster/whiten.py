@@ -8,7 +8,7 @@ def _l2(X):
     return X / np.clip(n, 1e-12, None)
 
 
-def whiten_batch(X, reduce_dim=128, shrinkage=1e-3):
+def whiten_batch(X, reduce_dim=128, shrinkage=0.1):
     X = _l2(np.asarray(X, dtype=np.float64))
     n, d = X.shape
     # A single sample has no covariance to whiten; np.cov on one observation
