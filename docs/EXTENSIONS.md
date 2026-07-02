@@ -1,0 +1,152 @@
+# Extensions — API reference
+
+Every public function returns a dict (or list of dicts) with an `ok` key; on failure it is
+`{"ok": False, "error": "..."}`. Import paths shown are the in-BDOS paths
+(`my.extensions.<package>`). Run with the BDOS venv Python.
+
+Contents: [crawl4ai](#crawl4ai) · [landing_audit](#landing_audit) · [schema_check](#schema_check)
+· [url_health](#url_health) · [page_monitor](#page_monitor) · [content_compare](#content_compare)
+· [marginal_ers](#marginal_ers)
+
+---
+
+## crawl4ai
+
+Browser-based crawling & extraction in a dedicated venv (Playwright). Also the **shared
+fetch layer** for the other web tools. Requires a one-time `install()`.
+
+```python
+from my.extensions.crawl4ai.install import install
+install()                                   # one-time: venv + Chromium
+
+from my.extensions.crawl4ai import scrape, deep_crawl, extract, ask, fetch_html, status, clear_cache
+```
+
+| Function | Purpose |
+|---|---|
+| `scrape(url, fit=False, timeout=60)` | Single page → clean markdown (`fit=True` = main content only) |
+| `deep_crawl(url, strategy="bfs", max_pages=10, fmt="markdown")` | Crawl many sub-pages (`bfs`/`dfs`/`best-first`) |
+| `extract(url, prompt=...)` | Structured extraction → JSON via LLM (needs an LLM provider) |
+| `extract(url, schema_path=..., extraction_config=...)` | Structured extraction via CSS schema (no LLM) |
+| `ask(url, question)` | Q&A over a page (needs an LLM provider) |
+| `fetch_html(url, timeout=60, force_urllib=False)` | Rendered HTML (used by the other tools) |
+| `status()` / `clear_cache()` | Install state / clear cache |
+
+Result (scrape/deep_crawl): `ok, url, format, content, chars, truncated, saved_path,
+error`. Output over ~60k chars is written to `crawl4ai/outputs/<domain>/<format>/…` and
+`content` is truncated — read `saved_path` for the full result.
+
+---
+
+## landing_audit
+
+Landing-page audit for Google Ads quality **and** sales-copy review (via the skill).
+
+```python
+from my.extensions.landing_audit import audit, audit_many
+r = audit("https://example.com")            # audit_many(urls) for a batch
+```
+
+Returns: `ok, engine, final_url, http_status, https, fetch_ms, bytes, title {text,length},
+meta_description {text,length}, canonical, lang, headings {h1[],h2[],h1_count}, word_count,
+has_viewport, structured_data {present,count,types}, images_total, images_missing_alt,
+cta {count,unique,keywords,samples}, flags[]`.
+
+`flags` are human-readable warnings (no meta description, missing/multiple H1, no viewport,
+not HTTPS, title too long, thin content, no structured data, images without alt, no CTA).
+The `ext-landing-audit` skill additionally guides an AIDA/PAS/FAB sales-copy review.
+
+---
+
+## schema_check
+
+Extract & validate schema.org JSON-LD, focused on Google Merchant Center eligibility.
+
+```python
+from my.extensions.schema_check import extract, validate_product, validate_many
+extract("https://shop.example.com/p/123")           # all JSON-LD blocks + types
+validate_product("https://shop.example.com/p/123")  # Merchant readiness
+```
+
+`extract` → `ok, url, count, blocks[], types[], errors[]`.
+`validate_product` → `ok, url, found, product, missing_required[], missing_recommended[],
+issues[], merchant_ready`. Finds a `Product` nested anywhere (`@graph`, `mainEntity`,
+`ItemList`, …). `availability` accepts schema.org URLs or short forms (InStock/OutOfStock).
+
+---
+
+## url_health
+
+Final-URL / link health for Ads final URLs, sitelinks, and site crawls. **Raw HTTP by
+design** (real status codes and redirect chains are the point — no browser rendering).
+
+```python
+from my.extensions.url_health import check, check_many, crawl
+check("http://github.com")                  # single URL + redirect chain
+crawl("https://example.com", max_pages=50)  # BFS same-domain broken-link scan
+```
+
+`check` → `ok, url, final_url, final_status, redirect_chain [(url,status)...], redirects,
+https_final, healthy, note`. A 404 is a valid result (`ok=True, final_status=404`); only
+DNS/connection/timeout failures give `ok=False`. `healthy` = 200, ≤1 redirect hop, no
+https→http downgrade.
+`crawl` → `ok, start, pages_checked, broken [{url,status,found_on}], redirects[], ok_count`.
+
+---
+
+## page_monitor
+
+On-demand page-change monitoring (competitor / price / promo watching). Snapshots the
+readable text (markup stripped) and diffs against the previous snapshot.
+
+```python
+from my.extensions.page_monitor import snapshot, diff, list_snapshots
+snapshot("https://competitor.com/pricing")  # store a timestamped snapshot
+diff("https://competitor.com/pricing")      # fresh snapshot + unified diff vs previous
+list_snapshots("https://competitor.com/pricing")
+```
+
+`snapshot` → `ok, url, hash, path, changed_vs_previous` (None on first).
+`diff` → `ok, url, changed, added_lines, removed_lines, diff (≈8k char cap), path`.
+Snapshots are stored locally under `page_monitor/snapshots/` (gitignored).
+
+---
+
+## content_compare
+
+Compare your page against competitors and find content gaps. Diacritics-insensitive
+matching (handles Polish ł/đ/ø); phrase keywords match on word boundaries.
+
+```python
+from my.extensions.content_compare import analyze, compare
+analyze("https://a.com", keywords=["buty trekkingowe", "membrana"])
+compare(["https://a.com", "https://b.com"], keywords=["buty trekkingowe", "membrana"])
+```
+
+`analyze` → `ok, url, title, meta_description, word_count, headings {h1,h2,h3},
+keywords {kw: {count, in_title, in_headings}}`.
+`compare` → `ok, pages[], matrix {kw:{url:count}}, gaps {kw:[urls missing]}, summary`.
+
+---
+
+## marginal_ers
+
+Profit-driven bidding decisions via **marginal ERS** and price elasticity (the "Zero-ROI"
+model). Maximizing ROAS ≠ maximizing profit. Pure math, no network.
+
+```python
+from my.extensions.marginal_ers import analyze, decide, elasticity, ers, roas, roi
+analyze({"cost": 1000, "revenue": 5000, "clicks": 1000},   # before
+        {"cost": 1320, "revenue": 6000, "clicks": 1200})   # after
+```
+
+Model: `ERS = Cost/Revenue`, `ROAS = 1/ERS`, `ROI = ROAS-1`, elasticity
+`E = %ΔClicks/%ΔCPC`, marginal `ERSm = ERS·(1+1/E)`. Scaling up is profitable while
+`ERSm < 1` ⇔ `ROAS > 1+1/E` ⇔ `ROI > 1/E`.
+
+`analyze(before, after)` (snapshots of `{cost, revenue, clicks}`) → `ok, ers, elasticity,
+marginal_ers, roas, roi, target_roas (=1+1/E), target_roi, target_ers, profitable_to_scale,
+verdict ("scale up"/"at optimum"/"cut back"), reason, measured`.
+`decide(current_ers, e)` if you already have ERS and elasticity. Helpers: `ers, roas, roi,
+elasticity, elasticity_from_revenue_ers, marginal_ers, target_roas, target_roi, target_ers`.
+Source: <https://adequate.digital/model-zero-roi-optymalizacja-profit-driven/>.

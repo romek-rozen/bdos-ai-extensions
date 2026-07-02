@@ -4,6 +4,19 @@ Community extensions for [BDOS AI](https://skq.pl/bdos-ai-pl) — a Google Ads
 management system. Extensions live under BDOS's `my/` directory, so they **survive
 `bdos update`** and are never overwritten by the core.
 
+**New here?** Start with [`docs/GETTING_STARTED.md`](docs/GETTING_STARTED.md).
+
+## Documentation
+
+| Doc | For |
+|-----|-----|
+| [Getting Started](docs/GETTING_STARTED.md) | Zero-to-working install, first run, troubleshooting |
+| [Extensions reference](docs/EXTENSIONS.md) | Every function, return shape, example |
+| [AGENTS.md](AGENTS.md) | How AI agents should use the extensions |
+| [Contributing](CONTRIBUTING.md) | Add your own extension |
+| [Changelog](CHANGELOG.md) | What changed |
+| [Zero-ROI model](docs/references/zero-roi-model.md) | Theory behind `marginal_ers` |
+
 ## Extensions
 
 ### `crawl4ai/` — local web crawling & extraction

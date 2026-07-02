@@ -1,50 +1,68 @@
 # AGENTS.md — guidance for AI agents
 
-This repo hosts extensions for [BDOS AI](https://skq.pl/bdos-ai-pl) . When an agent (Claude Code, pi, etc.) works
-in a BDOS session, these notes explain how to use the extensions correctly.
+This repo hosts community extensions for [BDOS AI](https://skq.pl/bdos-ai-pl). When an agent
+(Claude Code, pi, etc.) works inside a BDOS session, these notes explain how to use the
+extensions correctly. Human docs: [`README.md`](README.md),
+[`docs/GETTING_STARTED.md`](docs/GETTING_STARTED.md),
+[`docs/EXTENSIONS.md`](docs/EXTENSIONS.md).
 
-## crawl4ai
+## Golden rules
 
-Local web crawling & extraction. Wraps the Crawl4AI CLI in a dedicated venv — **no MCP
-server needed**, works offline, survives `bdos update`.
+1. **Import path inside BDOS is `my.extensions.<package>`.** Run scripts with the BDOS venv
+   Python (path in the session banner). Only `crawl4ai` shells out to its own venv for the
+   actual browser crawling — everything else runs in-process on the BDOS venv.
+2. **Self-contained code blocks.** Every Python block you run must include its own imports —
+   BDOS executes skill blocks in isolation.
+3. **Every public function returns a dict with an `ok` key.** On failure:
+   `{"ok": False, "error": "..."}`. Check `ok` before using results.
+4. **Match the user's language** (PL/EN) in conversation; code and files stay English.
+5. **Never mutate a Google Ads account from these tools.** They are read/analyze only. Hand
+   any recommended change (e.g. a target ROAS) to the BDOS mutation workflow.
 
-### Import path (inside BDOS)
+## The fetch layer (important)
 
-```python
-from my.extensions.crawl4ai import scrape, deep_crawl, extract, ask, status, clear_cache
-from my.extensions.crawl4ai.install import install
-```
+Raw `urllib` gets blocked by anti-bot pages and can't run JS. All page-fetching extensions
+route through `crawl4ai.fetch_html()` — a **rendered, human-like** browser fetch — and fall
+back to a charset-aware `urllib` only when crawl4ai isn't installed. So for real-world sites,
+**install crawl4ai first** (`from my.extensions.crawl4ai.install import install; install()`).
+Exception: `url_health` intentionally uses raw HTTP, because checking real status codes and
+redirect chains is its whole point.
 
-Run scripts with the **BDOS venv Python** (path in the session banner). The extension
-shells out to its **own** venv (`crawl4ai/.venv`) for the actual crawling — the two
-interpreters are intentionally separate.
+## Extensions — when to use which
 
-### Rules for agents
+| User intent | Extension | Key call |
+|---|---|---|
+| Scrape / crawl a page, get markdown, extract data | `crawl4ai` | `scrape(url)`, `deep_crawl(url)`, `extract(url, prompt=...)` |
+| Audit a landing page (Ads quality + sales copy) | `landing_audit` | `audit(url)` |
+| Check product structured data / Merchant eligibility | `schema_check` | `validate_product(url)` |
+| Verify final URLs, redirects, broken links | `url_health` | `check(url)`, `crawl(url)` |
+| Watch a page for changes (price/promo/content) | `page_monitor` | `diff(url)` |
+| Compare content vs competitors, find gaps | `content_compare` | `compare(urls, keywords=[...])` |
+| Should I scale a campaign up/down? profit-optimal ROAS? | `marginal_ers` | `analyze(before, after)` |
 
-1. **Check installation first.** Call `status()`. If `installed` is False, run `install()`
-   and warn the user it downloads a browser (a few minutes). Prefer running long installs
-   in tmux.
-2. **Self-contained code blocks.** Every Python block must include its own imports — never
-   assume a previous block imported something. (BDOS skills are executed in isolation.)
-3. **Cache is on by default.** Pass `bypass_cache=True` only when the user needs a fresh
-   fetch.
-4. **Long output goes to a file.** When `saved_path` is set and `truncated` is True, read
-   the file for the full result instead of re-crawling.
-5. **LLM features need a provider.** `extract(prompt=...)` and `ask()` require an LLM
-   provider configured in crawl4ai (API key in env). `scrape()`, `deep_crawl()`, and
-   CSS/schema `extract()` do not.
-6. **Match the user's language** in conversation (PL/EN); keep code and files in English.
+## Per-extension notes
 
-### Result shape
+- **crawl4ai** — `scrape(url, fit=False)`, `deep_crawl(url, strategy="bfs", max_pages=10)`,
+  `extract(url, prompt=...)` (LLM) or `extract(url, schema_path=..., extraction_config=...)`
+  (CSS, no LLM), `ask(url, q)` (LLM), `fetch_html(url)`, `status()`, `clear_cache()`. Needs a
+  one-time `install()`. Output >60k chars is written to `crawl4ai/outputs/…` (`saved_path`).
+- **landing_audit** — `audit(url)` returns technical signals + `flags`. The skill also drives
+  a sales-copy/conversion review (AIDA/PAS/FAB) using scraped text.
+- **schema_check** — `validate_product(url)` → `merchant_ready`, `missing_required`,
+  `missing_recommended`, `issues`. Finds Product nested anywhere in JSON-LD (`@graph`, etc.).
+- **url_health** — `check(url)` captures the full `redirect_chain` and `healthy`; `crawl(url,
+  max_pages=50)` finds `broken` internal links. Raw HTTP by design.
+- **page_monitor** — `snapshot(url)`, `diff(url)`, `list_snapshots(url)`. Snapshots live in
+  `page_monitor/snapshots/` (gitignored, local state).
+- **content_compare** — `analyze(url, keywords)`, `compare(urls, keywords)` → coverage
+  `matrix` + `gaps`. Diacritics-insensitive (handles Polish ł/đ/ø).
+- **marginal_ers** — `analyze(before, after)` from two period snapshots (`{cost, revenue,
+  clicks}`) → `verdict` (scale up / at optimum / cut back) and `target_roas` (= 1 + 1/E).
+  Pure math, no network. Feed the recommended tROAS to the mutation workflow.
 
-All functions return: `ok`, `url`, `format`, `content`, `chars`, `truncated`,
-`saved_path`, `error`, `command`.
+## Adding a new extension
 
-### Typical requests → calls
-
-| User asks | Call |
-|-----------|------|
-| "scrape X / give me the page as markdown" | `scrape(url)` (add `fit=True` for main content only) |
-| "crawl the whole docs / N pages" | `deep_crawl(url, strategy="bfs", max_pages=N)` |
-| "extract prices/products as JSON" | `extract(url, prompt="…")` |
-| "what does this page say about …" | `ask(url, question)` |
+See [`CONTRIBUTING.md`](CONTRIBUTING.md). In short: a package `<name>/` with `__init__.py`
+(re-export + `__version__`), a skill `skills/ext-<name>/SKILL.md` (name prefix `ext-`, never
+`bdos-`), pure stdlib where possible, `ok`-keyed returns, English only. Then
+`install_into_bdos.py` + `bdos update --regenerate`.
