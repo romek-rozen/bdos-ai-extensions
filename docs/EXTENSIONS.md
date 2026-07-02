@@ -6,7 +6,7 @@ Every public function returns a dict (or list of dicts) with an `ok` key; on fai
 
 Contents: [crawl4ai](#crawl4ai) · [landing_audit](#landing_audit) · [schema_check](#schema_check)
 · [url_health](#url_health) · [page_monitor](#page_monitor) · [content_compare](#content_compare)
-· [marginal_ers](#marginal_ers) · [ngram_pro](#ngram_pro)
+· [marginal_ers](#marginal_ers) · [ngram_pro](#ngram_pro) · [d4s](#d4s)
 
 ---
 
@@ -177,3 +177,46 @@ with `target_roas` → `cost − conv_value/target_roas`; else `cost` (0 conv) o
 are optional/best-effort (GA4 has no per-search-term dimension) — pass `ga4_by_term` only if
 you can map terms to sessions. Hand chosen negatives to the mutation workflow; never exclude
 from here.
+
+---
+
+## d4s
+
+Thin DataForSEO REST client. Pure standard library, independent of the `dfs-mcp` MCP server.
+Credentials from env: `DATAFORSEO_USERNAME` (alias `DATAFORSEO_LOGIN`) + `DATAFORSEO_PASSWORD`.
+Get an account: <https://skq.pl/data4seo> (affiliate link). Read/analyze only.
+
+```python
+from my.extensions.d4s import (
+    Client,
+    # keywords data / google ads
+    search_volume, keywords_for_site, keywords_for_keywords, ad_traffic_by_keywords, google_trends,
+    # labs
+    keyword_ideas, keyword_suggestions, keyword_difficulty, search_intent,
+    # serp
+    serp, serp_competitors, autocomplete,
+    # ads transparency (task mode)
+    ads_advertisers, ads_search,
+    # merchant / shopping (task mode)
+    products, sellers,
+    # meta helpers
+    locations, languages,
+)
+```
+
+Every wrapper takes `location=` / `language=` (a name like `"Poland"`/`"Polish"` or a numeric
+code) and an optional `client=`; each returns `{"ok", "cost", "tasks", "result", "raw"}`.
+
+`Client(login=None, password=None, base_url=None, transport=None, env=None, sleeper=None,
+now=None, max_attempts=3, timeout=30.0)`:
+
+- `call(path, payload=None, method="POST")` — any **live** endpoint; retries on 429/5xx and
+  unpacks the DataForSEO envelope (`result` = flattened `tasks[].result`).
+- `task(base_path, payload, timeout=120.0, interval=5.0)` — blocking submit → poll → get for
+  endpoints without a `live` variant (Ads Transparency, Merchant). On timeout:
+  `{"ok": False, "error": "task timeout", "task_id": ...}`.
+- Deferred pooling: `task_submit(base_path, payload)` → `{"task_id"}`,
+  `tasks_ready(base_path)`, `task_fetch(base_path, task_id)`.
+
+Costs are in USD. Missing credentials return `{"ok": False, "error": "missing DataForSEO
+credentials ..."}` rather than raising.

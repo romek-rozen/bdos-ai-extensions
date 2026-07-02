@@ -99,6 +99,20 @@ vs-average deltas, and optional GA4 engagement columns. Pure Python; fed with BD
 - **Note:** GA4 has no per-search-term dimension, so the GA4 engagement columns are
   *best-effort* — only populated if you pass a `{term: {...}}` mapping; otherwise omitted.
 
+### `d4s/` — DataForSEO API client
+
+A thin, self-contained REST client for the DataForSEO API — keyword **search volume + CPC +
+competition** (Keyword-Planner data), keyword ideas/suggestions/difficulty, search intent,
+keywords-for-site, ad-traffic estimation, SERP + competitors, autocomplete, Google Trends,
+Google Ads Transparency (competitor ad creatives), and Google Shopping. Pure standard library,
+independent of the `dfs-mcp` MCP server. Read/analyze only.
+
+- `search_volume`, `keyword_ideas`, `ad_traffic_by_keywords`, `serp`, `ads_search`, … or the
+  generic `Client().call(path, payload)` for any endpoint
+- Credentials from env: `DATAFORSEO_USERNAME`/`DATAFORSEO_LOGIN` + `DATAFORSEO_PASSWORD`
+- Get an account: **https://skq.pl/data4seo** *(affiliate link)*
+- Skill: `ext-d4s`
+
 ## Install into BDOS
 
 ### Easiest — inside a BDOS session

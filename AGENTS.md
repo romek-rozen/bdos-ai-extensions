@@ -40,6 +40,7 @@ redirect chains is its whole point.
 | Compare content vs competitors, find gaps | `content_compare` | `compare(urls, keywords=[...])` |
 | Should I scale a campaign up/down? profit-optimal ROAS? | `marginal_ers` | `analyze(before, after)` |
 | N-gram waste analysis of search terms → negatives | `ngram_pro` | `analyze(search_terms, target_cpa=...)` |
+| Keyword volume+CPC, ideas, SERP, competitor ads, Shopping (DataForSEO) | `d4s` | `search_volume(...)`, `Client().call(path, payload)` |
 
 ## Per-extension notes
 
@@ -60,6 +61,16 @@ redirect chains is its whole point.
 - **marginal_ers** — `analyze(before, after)` from two period snapshots (`{cost, revenue,
   clicks}`) → `verdict` (scale up / at optimum / cut back) and `target_roas` (= 1 + 1/E).
   Pure math, no network. Feed the recommended tROAS to the mutation workflow.
+- **d4s** — DataForSEO REST client, independent of the `dfs-mcp` MCP server. Env creds
+  `DATAFORSEO_USERNAME`/`DATAFORSEO_LOGIN` + `DATAFORSEO_PASSWORD` (get an account:
+  https://skq.pl/data4seo — affiliate). Live wrappers: `search_volume`, `keywords_for_site`,
+  `keywords_for_keywords`, `ad_traffic_by_keywords`, `google_trends`, `keyword_ideas`,
+  `keyword_suggestions`, `keyword_difficulty`, `search_intent`, `serp`, `serp_competitors`,
+  `autocomplete`, `locations`, `languages`. Task-mode (submit→poll→get, has `timeout`/
+  `interval`): `ads_advertisers`, `ads_search` (Ads Transparency), `products`, `sellers`
+  (Shopping). Any other endpoint via `Client().call(path, payload)`; bulk queue via
+  `task_submit`/`tasks_ready`/`task_fetch`. Location/language take a name or numeric code.
+  Read/analyze only — never mutate an account.
 - **ngram_pro** — `analyze(search_terms, target_cpa=…)` → per-fragment table ranked by
   `nscore` (wasted spend) + `negatives[]`. Feed it `engine.execute(entity="search_terms")`
   rows. Confirm negatives and hand them to the mutation workflow; never exclude from here.
