@@ -96,6 +96,8 @@ vs-average deltas, and optional GA4 engagement columns. Pure Python; fed with BD
 
 - `analyze(search_terms, target_cpa=..., min_cost=..., keywords=..., ga4_by_term=...)`
 - Skill: `ext-ngram-pro`
+- **Note:** GA4 has no per-search-term dimension, so the GA4 engagement columns are
+  *best-effort* — only populated if you pass a `{term: {...}}` mapping; otherwise omitted.
 
 ## Install into BDOS
 
