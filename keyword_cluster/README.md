@@ -15,7 +15,7 @@ It runs in three tiers, picked automatically (see [Tiers](#the-three-tiers)):
 
 - **lexical** — works out of the box, zero install, standard library only.
 - **fuzzy** — typo/word-order tolerant (needs `rapidfuzz`).
-- **semantic** — meaning-based clustering via embeddings + HDBSCAN (needs the isolated
+- **semantic** — meaning-based clustering via embeddings + cosine threshold (needs the isolated
   heavy venv and an embedding provider).
 
 ## How it fits after `bdos-keyword-research`
@@ -109,19 +109,19 @@ Keys live in `keyword_cluster/.env` (gitignored) — never in `config.yaml`.
 from my.extensions.keyword_cluster import cluster
 ```
 
-### `cluster(keywords, *, method="auto", threshold=None, min_cluster_size=2, provider=None, model=None, whitening="batch", viz=False, whitening_background=None, seed=42, umap_dim=30)`
+### `cluster(keywords, *, method="auto", threshold=None, min_cluster_size=2, provider=None, model=None, whitening="batch", viz=False, whitening_background=None)`
 
 | Param | Type | Default | Meaning |
 |---|---|---|---|
 | `keywords` | `list[str \| dict]` | — | Keyword texts, or dicts with `text` + optional `avg_monthly_searches`, `cpc_low`, `cpc_high`, `competition` |
 | `method` | `str` | `"auto"` | `"auto"` / `"lexical"` / `"fuzzy"` / `"semantic"` |
-| `threshold` | `float \| None` | tier default | Similarity cutoff for lexical (`0.5`) / fuzzy (`0.7`); ignored for semantic |
-| `min_cluster_size` | `int` | `2` | Drop clusters smaller than this |
+| `threshold` | `float \| None` | tier default | Similarity cutoff. Lexical `0.5`, fuzzy `0.7`, **semantic `0.8`** (cosine on the whitened embeddings). Higher = fewer, tighter, more coherent groups (more keywords fall to `noise`); lower = broader groups that start gluing distinct products. Tune per set: `0.75`–`0.85` is the useful range. |
+| `min_cluster_size` | `int` | `2` | Drop clusters smaller than this (ad groups need ≥2 keywords; sometimes 1 is acceptable downstream) |
 | `provider` | `str \| None` | config | Override embedding provider (semantic) |
 | `model` | `str \| None` | config | Override embedding model (semantic) |
-| `whitening` | `str` | `"batch"` | `"batch"` (default) applies batch ZCA whitening of embeddings (semantic); `"none"` skips it |
-| `viz` | `bool` | `False` | Also render a UMAP scatter PNG (semantic) |
-| `whitening_background` | `str \| None` | `None` | Path to a precomputed background (`mu_A.npy`/`W_A.npy`) to whiten against instead of the batch |
+| `whitening` | `str` | `"batch"` | Whitening for the semantic tier. A ZCA **background** (auto-discovered/downloaded for the model) is preferred and used when available; else `"batch"` batch-ZCA; `"none"` = raw L2. The `0.8` default threshold is calibrated on the ZCA background. |
+| `viz` | `bool` | `False` | Also render a scatter PNG (semantic) |
+| `whitening_background` | `str \| None` | `None` | Explicit path to a precomputed background (`mu_A.npy`/`W_A.npy`) to whiten against instead of auto-discovery |
 
 ### Return shape
 
@@ -134,8 +134,8 @@ On success:
 | `ok` | `bool` | `True` |
 | `method_used` | `str` | The tier actually run (`lexical`/`fuzzy`/`semantic`) |
 | `clusters` | `list[dict]` | Clusters, sorted by total volume then size (desc) |
-| `noise` | `list[str]` | Unclustered keywords (semantic HDBSCAN noise); `[]` for lexical/fuzzy |
-| `viz_path` | `str \| None` | Path to the UMAP PNG when `viz=True`, else `None` |
+| `noise` | `list[str]` | Unclustered keywords (semantic: below-threshold long tail); `[]` for lexical/fuzzy |
+| `viz_path` | `str \| None` | Path to the scatter PNG when `viz=True`, else `None` |
 
 Each cluster dict:
 

@@ -25,6 +25,11 @@ def union_find_cluster(texts, sim_fn, threshold: float):
 def umap_reduce(vectors, n_components=30, n_neighbors=3, random_state=42):
     """Reduce embeddings to a low-dim manifold before density clustering.
 
+    NOTE: no longer used by the semantic tier — it now clusters by thresholded
+    cosine union-find directly on the whitened embeddings (see
+    ``api._semantic_cluster``), because UMAP+HDBSCAN glued syntactically parallel
+    phrases by their shared frame. Kept for viz / optional experimentation.
+
     HDBSCAN on full-dim embeddings finds one blurry mega-cluster; reducing with
     UMAP (cosine) first sharpens density so it recovers many coherent ad-group
     clusters. Skipped for small n (UMAP needs enough neighbours) — the caller
@@ -53,6 +58,10 @@ def umap_reduce(vectors, n_components=30, n_neighbors=3, random_state=42):
 
 def hdbscan_cluster(vectors, min_cluster_size=2, min_samples=2, cluster_selection_method="leaf"):
     """Return HDBSCAN labels (-1 = noise). Imports hdbscan lazily.
+
+    NOTE: no longer on the semantic tier's path (replaced by cosine union-find on
+    whitened embeddings — see ``api._semantic_cluster``). Kept for tests / optional
+    density-based experimentation.
 
     Defaults ``leaf`` + ``min_samples=2``: for keyword research we want **tight,
     real ad-group clusters**, not maximal coverage. ``leaf`` keeps fine,

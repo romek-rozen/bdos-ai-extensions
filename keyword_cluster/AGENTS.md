@@ -27,7 +27,7 @@ Use it once you already have keyword ideas — it structures them, it does not f
 
 | Call | Returns |
 |---|---|
-| `cluster(keywords, *, method="auto", threshold=None, min_cluster_size=2, provider=None, model=None, whitening="batch", viz=False, whitening_background=None, seed=42, umap_dim=30)` | dict: `ok, method_used, clusters[], noise[], viz_path`. Each cluster: `cluster_id, label, members[], size, total_volume, avg_cpc, dominant_competition, representative_keyword, suggested_ad_group, suggested_match_type` |
+| `cluster(keywords, *, method="auto", threshold=None, min_cluster_size=2, provider=None, model=None, whitening="batch", viz=False, whitening_background=None)` | dict: `ok, method_used, clusters[], noise[], viz_path`. Each cluster: `cluster_id, label, members[], size, total_volume, avg_cpc, dominant_competition, representative_keyword, suggested_ad_group, suggested_match_type`. Semantic tier clusters by cosine union-find on whitened embeddings; `threshold` (default **0.8**) tunes tightness — higher → fewer/tighter groups, more `noise`. |
 | `install()` (`my.extensions.keyword_cluster.install`) | `{"ok", "python", "already", "env", "next_steps"}` — one-time isolated heavy venv (uv); also auto-creates `.env` and reports key status |
 | `status()` (same module) | `{"ok", "installed": bool, "python", "packages"}` |
 | `env_status()` (same module) | `{"ok", "ready": bool, "providers": {openrouter, openai, ollama}, "env_path", "message"}` — check readiness + a plain-language next step before semantic clustering |
@@ -59,11 +59,13 @@ Use it once you already have keyword ideas — it structures them, it does not f
   in the CURRENT process, so those packages must be importable — invoke via
   `from my.extensions.keyword_cluster.install import venv_python` (run the code with that
   interpreter), not the plain BDOS Python.
-- **Batch whitening (default) favors precision**, and HDBSCAN may mark items as **noise** on
-  very small inputs — cluster larger keyword lists for best results.
-- **Semantic pipeline:** embed → (background/batch whitening) → **UMAP-reduce → HDBSCAN (`leaf`, min_samples=2)** → small-set cosine fallback. UMAP-before-HDBSCAN is what turns one blurry
-  mega-cluster into many coherent ad-group clusters; it's skipped for `n < 25` (small sets use
-  the cosine fallback). Tune with `min_cluster_size`.
+- **The semantic tier favors precision:** a high cosine `threshold` (default 0.8) means the
+  loose long tail falls to **noise** by design — cluster larger keyword lists for best results.
+- **Semantic pipeline:** embed → **ZCA-background whitening** (auto-downloaded, ~65 MB) →
+  **cosine union-find at `threshold` (default 0.8)**. No UMAP, no HDBSCAN — density clustering on
+  a UMAP manifold glued syntactically parallel phrases by their shared frame ("kask/uchwyt/sakwy
+  na rower" → one bucket); a cosine threshold on the whitened space keeps only tight, coherent
+  cliques. Tune tightness with `threshold` (0.75–0.85), size floor with `min_cluster_size`.
 - **Embeddings are cached** in a local SQLite store (`keyword_cluster/cache/`, gitignored),
   keyed by `(provider, model, dim, text)` — repeated keywords are never re-embedded and
   duplicates in one call collapse to a single request. `cache.stats()` / `cache.clear()` at

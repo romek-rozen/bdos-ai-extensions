@@ -2,6 +2,21 @@
 
 All notable changes to this repo. Dates are ISO (YYYY-MM-DD).
 
+## 2026-07-02 — repo `0.2.0`
+
+### Changed
+- **keyword_cluster `0.2.0` — semantic tier rewrite.** The semantic tier now clusters by
+  **cosine union-find at a tunable `threshold`** (default `0.8`) directly on the
+  **ZCA-background-whitened** embeddings — **UMAP + HDBSCAN removed** from the clustering path.
+  The old UMAP→HDBSCAN pipeline glued syntactically parallel phrases by their shared frame
+  ("kask / uchwyt / sakwy na rower" → one incoherent bucket); a high cosine threshold on the
+  whitened space instead keeps only tight, coherent ad-group cliques and drops the loose tail to
+  `noise`. New `threshold` param (per-set self-tune, 0.75–0.85; recipe in the skill); the ZCA
+  background is now the default whitening (auto-downloaded on demand) and the `0.8` cutoff is
+  calibrated on it. UMAP stays for the `viz=True` 2D scatter; `umap_reduce`/`hdbscan_cluster`
+  remain in `cluster_graph` for viz/experiments. Removed the unused `seed`/`umap_dim` params from
+  `cluster()`.
+
 ## 2026-07-02
 
 ### Added

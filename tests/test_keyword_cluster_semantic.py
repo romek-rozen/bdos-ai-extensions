@@ -145,11 +145,12 @@ class TestVizFailureIsolated(unittest.TestCase):
     def test_scatter_exception_does_not_sink_result(self):
         from keyword_cluster import api
         members = [{"text": "a"}, {"text": "b"}]
-        with mock.patch("keyword_cluster.api.embed", return_value=[[0.0], [1.0]]), \
-                mock.patch("keyword_cluster.cluster_graph.hdbscan_cluster", return_value=[0, 0]), \
+        # Two identical unit vectors → cosine 1.0 → one cluster via the cosine
+        # union-find path (no UMAP/HDBSCAN); a viz crash must not sink it.
+        with mock.patch("keyword_cluster.api.embed", return_value=[[1.0, 0.0], [1.0, 0.0]]), \
                 mock.patch("keyword_cluster.viz.scatter", side_effect=ValueError("boom")):
             result = api._semantic_cluster(
-                members, min_cluster_size=2, provider="openai", model="m",
+                members, threshold=0.8, min_cluster_size=2, provider="openai", model="m",
                 whitening=None, whitening_background=None, viz=True)
         self.assertTrue(result["ok"])
         self.assertIsNone(result["viz_path"])
