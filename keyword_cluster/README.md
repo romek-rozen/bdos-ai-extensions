@@ -109,7 +109,7 @@ Keys live in `keyword_cluster/.env` (gitignored) — never in `config.yaml`.
 from my.extensions.keyword_cluster import cluster
 ```
 
-### `cluster(keywords, *, method="auto", threshold=None, min_cluster_size=2, provider=None, model=None, whitening="batch", viz=False, whitening_background=None)`
+### `cluster(keywords, *, method="auto", threshold=None, min_cluster_size=2, provider=None, model=None, whitening="batch", viz=False, whitening_background=None, seed=42)`
 
 | Param | Type | Default | Meaning |
 |---|---|---|---|

@@ -56,7 +56,7 @@ volume/CPC/competition rollups.
 ## `cluster()` signature & return
 
 `cluster(keywords, *, method="auto", threshold=None, min_cluster_size=2, provider=None,
-model=None, whitening="batch", viz=False, whitening_background=None)`
+model=None, whitening="batch", viz=False, whitening_background=None, seed=42)`
 
 Returns `{"ok", "method_used", "clusters": [...], "noise": [...], "viz_path"}`. Each cluster:
 `cluster_id, label, members[], size, total_volume, avg_cpc, dominant_competition,
@@ -133,6 +133,10 @@ into ~20 coherent ad-group clusters instead of one giant blob; it's skipped for 
 sets use the fallback so they still cluster). Embeddings are **cached** in a local SQLite store
 (`keyword_cluster/cache/`, gitignored) keyed by `(provider, model, dim, text)`, so repeated
 keywords are never re-embedded — first run is slow, re-runs are near-instant.
+
+The pipeline is **deterministic** (UMAP `seed=42` default): the same keywords always give the
+same groups, so results are stable and cacheable. Pass `seed=None` for a fresh UMAP layout each
+run (e.g. to sanity-check cluster stability), or another int to vary reproducibly.
 
 ## Naming & review — YOUR job (the LLM layer)
 

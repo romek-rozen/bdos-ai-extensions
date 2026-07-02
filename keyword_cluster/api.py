@@ -60,7 +60,7 @@ def _cosine_threshold_labels(V, threshold, min_cluster_size):
     return labels
 
 
-def _semantic_cluster(members, *, min_cluster_size, provider, model, whitening, whitening_background, viz=False):
+def _semantic_cluster(members, *, min_cluster_size, provider, model, whitening, whitening_background, viz=False, seed=42):
     import numpy as np
     from .whiten import whiten_batch, load_background, apply_background, find_background, _l2
     from .cluster_graph import hdbscan_cluster, umap_reduce
@@ -83,7 +83,7 @@ def _semantic_cluster(members, *, min_cluster_size, provider, model, whitening, 
     else:
         vecs = raw_l2
     # UMAP-reduce before density clustering (sharpens clusters; no-op for small n).
-    reduced = umap_reduce(vecs)
+    reduced = umap_reduce(vecs, random_state=seed)
     labels = hdbscan_cluster(reduced, min_cluster_size=min_cluster_size)
     # Small-set fallback: HDBSCAN needs density and returns all-noise on tiny
     # lists (a handful of keywords). Whitening decorrelates a tiny batch toward
@@ -112,7 +112,8 @@ def _semantic_cluster(members, *, min_cluster_size, provider, model, whitening, 
 
 
 def cluster(keywords, *, method="auto", threshold=None, min_cluster_size=2,
-            provider=None, model=None, whitening="batch", viz=False, whitening_background=None):
+            provider=None, model=None, whitening="batch", viz=False, whitening_background=None,
+            seed=42):
     try:
         members = _coerce(keywords)
     except ValueError as e:
@@ -128,7 +129,7 @@ def cluster(keywords, *, method="auto", threshold=None, min_cluster_size=2,
         try:
             return _semantic_cluster(members, min_cluster_size=min_cluster_size, provider=provider,
                                      model=model, whitening=whitening, whitening_background=whitening_background,
-                                     viz=viz)
+                                     viz=viz, seed=seed)
         except Exception as e:
             return {"ok": False, "error": f"semantic tier failed: {e}. Run install() and configure .env."}
 

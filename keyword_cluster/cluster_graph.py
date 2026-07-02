@@ -22,7 +22,7 @@ def union_find_cluster(texts, sim_fn, threshold: float):
     return list(groups.values())
 
 
-def umap_reduce(vectors, n_components=10, n_neighbors=15):
+def umap_reduce(vectors, n_components=10, n_neighbors=15, random_state=42):
     """Reduce embeddings to a low-dim manifold before density clustering.
 
     HDBSCAN on full-dim embeddings finds one blurry mega-cluster; reducing with
@@ -42,8 +42,9 @@ def umap_reduce(vectors, n_components=10, n_neighbors=15):
     with warnings.catch_warnings():
         # random_state forces n_jobs=1 (deterministic) — silence umap's advisory.
         warnings.simplefilter("ignore")
+        # random_state=42 (default) → reproducible; None → a fresh layout each run.
         return umap.UMAP(n_components=nc, n_neighbors=nn, min_dist=0.0,
-                         metric="cosine", random_state=42).fit_transform(V)
+                         metric="cosine", random_state=random_state).fit_transform(V)
 
 
 def hdbscan_cluster(vectors, min_cluster_size=2, cluster_selection_method="leaf"):
