@@ -61,7 +61,7 @@ Use it once you already have keyword ideas — it structures them, it does not f
   interpreter), not the plain BDOS Python.
 - **Batch whitening (default) favors precision**, and HDBSCAN may mark items as **noise** on
   very small inputs — cluster larger keyword lists for best results.
-- **Semantic pipeline:** embed → (background/batch whitening) → **UMAP-reduce → HDBSCAN (`eom`, min_samples=3)** → small-set cosine fallback. UMAP-before-HDBSCAN is what turns one blurry
+- **Semantic pipeline:** embed → (background/batch whitening) → **UMAP-reduce → HDBSCAN (`leaf`, min_samples=2)** → small-set cosine fallback. UMAP-before-HDBSCAN is what turns one blurry
   mega-cluster into many coherent ad-group clusters; it's skipped for `n < 25` (small sets use
   the cosine fallback). Tune with `min_cluster_size`.
 - **Embeddings are cached** in a local SQLite store (`keyword_cluster/cache/`, gitignored),

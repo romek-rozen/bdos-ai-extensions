@@ -130,7 +130,7 @@ re-learns the manifold, washing out the input whitening), so **batch is the vali
 ## How the semantic tier clusters
 
 embed → (background/batch whitening) → **UMAP-reduce (`dim=30, n_neighbors=5, min_dist=0`) →
-HDBSCAN (`eom`, min_samples=3)** → a cosine fallback for tiny sets. Reducing with UMAP before HDBSCAN is what
+HDBSCAN (`leaf`, min_samples=2)** → a cosine fallback for tiny sets. Reducing with UMAP before HDBSCAN is what
 breaks a 200-keyword list into ~20 coherent ad-group clusters instead of one giant blob; the
 `dim=30, n_neighbors=5` config beat the BERTopic canon (dim=10, nn=15) by ~15pp (fewer noise,
 tighter clusters). Tune per set via `umap_dim` (small sets → try 10). Skipped for `n < 25`
@@ -141,6 +141,21 @@ keywords are never re-embedded — first run is slow, re-runs are near-instant.
 The pipeline is **deterministic** (UMAP `seed=42` default): the same keywords always give the
 same groups, so results are stable and cacheable. Pass `seed=None` for a fresh UMAP layout each
 run (e.g. to sanity-check cluster stability), or another int to vary reproducibly.
+
+## Two-stage grouping — semantic (tight) then rapidfuzz (leftovers)
+
+The goal is **tight, mega-similar semantic groups**, not maximal coverage — it's fine to lose
+the long tail to `noise` (HDBSCAN `leaf` + `min_samples=2` keeps clusters tight, max ~2-6% of
+the set). Then group the leftovers **lexically** with the fuzzy tier:
+
+```python
+r = cluster(keywords, method="semantic")          # stage 1: tight semantic groups + noise[]
+r2 = cluster(r["noise"], method="fuzzy")           # stage 2: rapidfuzz groups the leftovers
+# 500 kw → 87 tight semantic groups + 12 lexical groups; nothing truly unclustered
+```
+
+Stage 1 groups by *meaning* (mega-similar); stage 2 groups the semantic outliers by shared
+words. Present both, semantic groups first.
 
 ## Naming & review — YOUR job (the LLM layer)
 
