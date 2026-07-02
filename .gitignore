@@ -15,3 +15,6 @@ page_monitor/snapshots/
 keyword_cluster/.venv/
 keyword_cluster/outputs/*.png
 keyword_cluster/.env
+
+# Claude Code local state / worktrees
+.claude/
