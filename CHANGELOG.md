@@ -2,6 +2,16 @@
 
 All notable changes to this repo. Dates are ISO (YYYY-MM-DD).
 
+## 2026-07-02 — repo `0.3.1`
+
+### Added
+- **keyword_cluster: `card()` — terminal-style PNG cluster card.** New `keyword_cluster/card.py`,
+  exported as `from my.extensions.keyword_cluster import card`. Renders the top-N clusters as a
+  dark, monospace "terminal card" (box header + colored cluster rows + first-K keywords each,
+  with an optional per-keyword search-volume column via `kw_volume={kw: vol}`), sorted by volume
+  when provided. A shareable summary image, complementary to `viz.scatter` (the analytical UMAP
+  projection). Args: `top_n`, `keys_per`, `title`, `subtitle`, `kw_volume`, `filename`.
+
 ## 2026-07-02 — repo `0.3.0`
 
 ### Changed
