@@ -60,6 +60,10 @@ result = analyze(
     min_blocked_terms=2,    # fragment must appear in ≥2 terms
     keywords=None,          # pass keyword_texts to fill Blocked Keywords
     limit=100,
+    # drop_stopwords=True by default: fragments made only of function words
+    # (do/z/w/na/the/and…) are skipped so they don't pollute waste/negatives.
+    # Content words like "lampa" are NOT stopwords — judge broad 1-grams by
+    # blocked_search_terms before excluding. Pass stopwords=[...] for a custom set.
 )
 print(result["ok"], "| totals:", result["totals"])
 ```
