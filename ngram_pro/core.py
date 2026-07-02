@@ -56,9 +56,24 @@ def fold(text: str) -> str:
     return text.lower()
 
 
+# Common function words (folded, ASCII) — dropped from n-grams by default so
+# they don't pollute the waste ranking / negatives. PL + EN.
+STOPWORDS = frozenset("""
+a an and are as at be by for from in into is it of on or the this that to with
+i w we z ze na do od po za o u ok ktory która które co czy to tak nie oraz lub albo
+ale jak gdzie kiedy dla bez pod nad przy ich jego jej sie się jest są być bardzo
+""".split())
+
+
 def tokenize(term: str) -> list[str]:
     """Fold, split on non-alphanumeric, drop empties. Keeps digits."""
     return [t for t in re.split(r"[^a-z0-9]+", fold(term)) if t]
+
+
+def _all_stopwords(ngram: str, stopwords) -> bool:
+    """True if every token of the n-gram is a stopword (or a single letter)."""
+    toks = ngram.split()
+    return all(t in stopwords or len(t) == 1 for t in toks)
 
 
 def ngrams_of(tokens: list[str], sizes=(1, 2, 3)) -> list[tuple[str, int]]:
@@ -103,7 +118,8 @@ class _Agg:
 
 def analyze(search_terms, sizes=(1, 2, 3), target_cpa=None, target_roas=None,
             min_cost=0.0, min_blocked_terms=1, keywords=None, ga4_by_term=None,
-            negatives_require_zero_conv=True, limit=None) -> dict:
+            negatives_require_zero_conv=True, limit=None,
+            drop_stopwords=True, stopwords=None) -> dict:
     """Aggregate search-term rows into ranked n-gram waste table + negatives.
 
     Args:
@@ -126,6 +142,7 @@ def analyze(search_terms, sizes=(1, 2, 3), target_cpa=None, target_roas=None,
     if not search_terms:
         return {"ok": False, "error": "no search terms provided"}
 
+    sw = STOPWORDS if stopwords is None else frozenset(fold(w) for w in stopwords)
     aggs: dict[tuple[str, int], _Agg] = {}
     tot_cost = tot_clicks = tot_impr = tot_conv = tot_value = 0.0
 
@@ -149,6 +166,8 @@ def analyze(search_terms, sizes=(1, 2, 3), target_cpa=None, target_roas=None,
         tokens = tokenize(term)
         seen: set[tuple[str, int]] = set()
         for ng, n in ngrams_of(tokens, sizes):
+            if drop_stopwords and _all_stopwords(ng, sw):
+                continue  # skip pure function-word fragments (do/z/w/na/the/and…)
             key = (ng, n)
             if key in seen:
                 continue  # count each term once per distinct fragment

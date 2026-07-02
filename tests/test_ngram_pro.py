@@ -79,6 +79,17 @@ class TestAnalyze(unittest.TestCase):
         for x in r["ngrams"]:
             self.assertGreaterEqual(x["cost"], 90)
 
+    def test_stopwords_dropped_by_default(self):
+        terms = [{"term": "lampa do salonu", "cost": 10, "clicks": 5,
+                  "impressions": 100, "conversions": 0, "conv_value": 0}]
+        grams = {x["ngram"] for x in analyze(terms, min_cost=0)["ngrams"]}
+        self.assertNotIn("do", grams)              # pure stopword dropped
+        self.assertIn("lampa", grams)              # content word kept
+        self.assertIn("lampa do", grams)           # mixed fragment kept
+        # with the filter off, the stopword reappears
+        grams_off = {x["ngram"] for x in analyze(terms, min_cost=0, drop_stopwords=False)["ngrams"]}
+        self.assertIn("do", grams_off)
+
 
 if __name__ == "__main__":
     unittest.main()
