@@ -153,7 +153,8 @@ def embed(texts, *, provider=None, model=None, base_url=None, dim=None, batch_si
         {"provider": provider, "model": model, "base_url": base_url, "dim": dim}
     )
     key_dim = cfg["dim"] or 0
-    cached = cache.get_many(cfg["provider"], cfg["model"], key_dim, texts)
+    use_cache = not os.environ.get("KEYWORD_CLUSTER_NO_CACHE")
+    cached = cache.get_many(cfg["provider"], cfg["model"], key_dim, texts) if use_cache else {}
     misses = [t for t in dict.fromkeys(texts) if t not in cached]  # unique, order-preserving
     if misses:
         fn = _embed_ollama if cfg["provider"] == "ollama" else _embed_openai_compatible
@@ -161,6 +162,13 @@ def embed(texts, *, provider=None, model=None, base_url=None, dim=None, batch_si
         for i in range(0, len(misses), batch_size):
             chunk = misses[i:i + batch_size]
             fresh.update(zip(chunk, fn(chunk, cfg)))
-        cache.put_many(cfg["provider"], cfg["model"], key_dim, fresh)
+        if use_cache:
+            cache.put_many(cfg["provider"], cfg["model"], key_dim, fresh)
         cached.update(fresh)
+    missing_out = [t for t in texts if t not in cached]
+    if missing_out:
+        raise RuntimeError(
+            f"embedding provider returned no vector for {len(missing_out)} input(s) "
+            f"(e.g. {missing_out[0]!r}); check the model name and API response"
+        )
     return [cached[t] for t in texts]

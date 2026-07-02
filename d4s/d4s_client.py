@@ -47,7 +47,7 @@ class Client:
         now=None,
         max_attempts=3,
         timeout=30.0,
-        cache=True,
+        cache=None,
         cache_ttl=604800.0,
         cache_db=None,
     ):
@@ -65,7 +65,10 @@ class Client:
         self._http_timeout = timeout
         self._last_request = None
         # Response cache — avoids re-paying DataForSEO for an identical query.
-        self._cache = bool(cache)
+        # Default: on for real clients, off when a custom transport is injected
+        # (tests/custom HTTP control their own responses). Pass cache=True/False
+        # to override.
+        self._cache = (transport is None) if cache is None else bool(cache)
         self._cache_ttl = cache_ttl
         self._cache_db = cache_db
 

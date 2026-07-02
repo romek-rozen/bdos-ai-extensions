@@ -10,6 +10,16 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 from keyword_cluster import embed as embed_mod  # noqa: E402
 
 
+def setUpModule():
+    # Keep provider tests hermetic: the embedding cache would otherwise serve
+    # stored vectors instead of the mocked HTTP responses.
+    os.environ["KEYWORD_CLUSTER_NO_CACHE"] = "1"
+
+
+def tearDownModule():
+    os.environ.pop("KEYWORD_CLUSTER_NO_CACHE", None)
+
+
 class TestEmbedOpenAI(unittest.TestCase):
     def test_openai_shape(self):
         fake = json.dumps({"data": [{"embedding": [0.1, 0.2]}, {"embedding": [0.3, 0.4]}]}).encode()
