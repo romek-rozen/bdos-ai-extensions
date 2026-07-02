@@ -1,6 +1,6 @@
 # AGENTS.md — guidance for AI agents
 
-This repo hosts extensions for **BDOS AI**. When an agent (Claude Code, pi, etc.) works
+This repo hosts extensions for [BDOS AI](https://skq.pl/bdos-ai-pl) . When an agent (Claude Code, pi, etc.) works
 in a BDOS session, these notes explain how to use the extensions correctly.
 
 ## crawl4ai

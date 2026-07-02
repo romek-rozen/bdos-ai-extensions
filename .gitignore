@@ -7,3 +7,6 @@ crawl4ai/.crawl4ai/
 __pycache__/
 *.pyc
 .DS_Store
+
+# page-monitor snapshots (local state)
+page_monitor/snapshots/

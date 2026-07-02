@@ -1,0 +1,21 @@
+"""
+landing_audit — self-contained landing-page audit extension for BDOS.
+
+Fetches a page with the standard library only (urllib) and extracts the quality
+and relevance signals that matter for a Google Ads landing page: title, meta
+description, headings, mobile-friendliness, structured data, images, CTAs and a
+list of human-readable warnings ("flags"). No pip dependencies, no venv, no MCP,
+no external services — pure stdlib, so it works fully offline and survives
+`bdos update` (lives under my/).
+
+Public API (import path inside BDOS):
+    from my.extensions.landing_audit import audit, audit_many
+
+    r = audit("https://example.com")           # single page → quality signals
+    rs = audit_many(["https://a.com", "https://b.com"])
+"""
+
+from .api import audit, audit_many
+
+__all__ = ["audit", "audit_many"]
+__version__ = "0.1.0"

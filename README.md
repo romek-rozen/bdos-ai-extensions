@@ -1,6 +1,6 @@
 # bdos-ai-extensions
 
-Community extensions for [BDOS AI](https://github.com/liveads-pl/BDOS-AI) — a Google Ads
+Community extensions for [BDOS AI](https://skq.pl/bdos-ai-pl) — a Google Ads
 management system. Extensions live under BDOS's `my/` directory, so they **survive
 `bdos update`** and are never overwritten by the core.
 
@@ -19,6 +19,51 @@ CLI in a **dedicated, isolated venv**. Runs fully locally — **no MCP server re
 - `install.install()` — one-time setup (venv + crawl4ai + Chromium)
 
 Output longer than ~60k chars is written to `crawl4ai/outputs/<domain>/<format>/…`.
+
+### `landing_audit/` — landing page audit for Google Ads
+
+Fetches a page and reports Ads landing-quality signals: title/meta, H1/H2, word count,
+mobile viewport, structured data, image alt coverage, CTA detection (EN+PL), and warning
+flags. Pure standard library, offline.
+
+- `audit(url)` / `audit_many(urls)`
+- Skill: `ext-landing-audit`
+
+### `schema_check/` — structured data (schema.org) extraction & validation
+
+Extracts JSON-LD (incl. nested `@graph`) and validates `Product` markup against Google
+Merchant Center / free-listing requirements (name, image, price, brand, sku/gtin,
+availability). Pure standard library, offline.
+
+- `extract(url)` / `validate_product(url)` / `validate_many(urls)`
+- Skill: `ext-schema-check`
+
+### `url_health/` — final-URL / link health checker
+
+Verifies Ads final URLs and sitelinks resolve to a healthy 200, captures the full redirect
+chain, catches https→http downgrades, and can crawl a domain for broken internal links.
+Pure standard library, offline.
+
+- `check(url)` / `check_many(urls)` / `crawl(url, max_pages=50)`
+- Skill: `ext-url-health`
+
+### `page_monitor/` — on-demand page change monitor
+
+Snapshots a page's readable text and produces a unified diff vs the previous snapshot —
+competitor / price / promo watching. Pure standard library, offline. Snapshots are stored
+locally under `page_monitor/snapshots/` (gitignored).
+
+- `snapshot(url)` / `diff(url)` / `list_snapshots(url)`
+- Skill: `ext-page-monitor`
+
+### `content_compare/` — competitor content comparison & gap analysis
+
+Compares your page against competitor pages: word counts, headings, and a keyword-coverage
+matrix with a content-gap section (which keywords are missing where). Diacritics-insensitive
+matching. Pure standard library, offline.
+
+- `analyze(url, keywords=[...])` / `compare(urls, keywords=[...])`
+- Skill: `ext-content-compare`
 
 ## Install into BDOS
 
