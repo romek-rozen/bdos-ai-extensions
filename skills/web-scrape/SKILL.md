@@ -1,9 +1,9 @@
 ---
-name: crawl4ai
+name: web-scrape
 description: Local web crawling, scraping and structured extraction via Crawl4AI (no MCP required). Use when the user wants to scrape a page, crawl a site, fetch a page as markdown, deep-crawl multiple pages, or extract structured data (prices, products, listings) from a website. Runs fully offline in a dedicated venv.
 ---
 
-# crawl4ai — local web crawling & extraction
+# web-scrape — local web crawling & extraction (crawl4ai)
 
 Self-contained BDOS extension wrapping the [Crawl4AI](https://github.com/unclecode/crawl4ai)
 CLI in a **dedicated, isolated venv**. Works fully locally — **no MCP server required** —
