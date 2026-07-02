@@ -104,7 +104,7 @@ vs-average deltas, and optional GA4 engagement columns. Pure Python; fed with BD
 Turns the flat output of `bdos-keyword-research` (100s of Keyword Planner ideas + metrics)
 into themed, **ad-group-ready clusters** — each with rolled-up volume/CPC/competition, a
 representative keyword, and a suggested ad-group name + match type. Three tiers, auto-selected:
-lexical (stdlib, zero install), fuzzy (`rapidfuzz`), and semantic (embeddings + HDBSCAN in an
+lexical (stdlib, zero install), fuzzy (`rapidfuzz`), and semantic (embeddings + whitened-cosine threshold in an
 isolated heavy venv). Read-only.
 
 - `cluster(keywords, method="auto", ...)` → `clusters[]` + `noise[]` (+ optional UMAP viz)

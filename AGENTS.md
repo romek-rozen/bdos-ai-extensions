@@ -100,7 +100,7 @@ wersja X). Zaktualizować? Odpalę `bash update.sh`."* On a "yes", run `bash upd
 - **keyword_cluster** — `cluster(keywords, method="auto", ...)` groups keyword-research output
   into ad-group-ready `clusters[]` (+ `noise[]`), each with `total_volume/avg_cpc/
   dominant_competition/representative_keyword/suggested_ad_group/suggested_match_type`. Three
-  tiers: lexical (stdlib) → fuzzy (`rapidfuzz`) → semantic (embeddings + HDBSCAN, needs
+  tiers: lexical (stdlib) → fuzzy (`rapidfuzz`) → semantic (embeddings + whitened-cosine threshold, needs
   `install()` + a provider). `install()` auto-creates `.env`; call `env_status()` first and, if
   not `ready`, show the user its `message` (paste one key — OpenRouter/OpenAI — or use local
   Ollama). `method="auto"` degrades quietly — check `method_used`. Whitening (default `batch`,

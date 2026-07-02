@@ -4,10 +4,12 @@ Precomputed **ZCA whitening backgrounds** live here (local, gitignored — not s
 repo because the matrices are large). When a background matching the resolved `(model, dim)`
 is present, semantic clustering uses it automatically instead of batch whitening.
 
-**Reality check:** with the tuned UMAP→HDBSCAN pipeline (`dim=30, n_neighbors=5`), **batch
-whitening matched or beat these keyword backgrounds** in testing — UMAP re-learns the manifold
-and washes out the input whitening. So a background is an **experimental opt-in**, not required;
-batch is the validated default.
+**Reality check:** now that the semantic tier clusters by **cosine threshold directly on the
+whitened space** (no UMAP re-learning the manifold), a ZCA **background is the winning setup** —
+it spreads the space so tight themes separate from shared-frame glue, and the `0.8` default
+threshold is calibrated on it. The tier auto-downloads one on demand, so this is the default in
+practice; batch whitening is the offline fallback (recalibrate `threshold` — its cosines run
+lower).
 
 ## Download on demand
 

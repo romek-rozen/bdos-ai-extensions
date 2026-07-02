@@ -56,7 +56,7 @@ The lexical tier is pure standard library. Import and call `cluster()`; it survi
 
 ### Semantic (and fuzzy) tier — one-time setup
 
-The semantic tier needs a separate, **isolated heavy venv** (numpy, scikit-learn, hdbscan,
+The semantic tier needs a separate, **isolated heavy venv** (numpy, scikit-learn,
 umap-learn, rapidfuzz, matplotlib). Install it once:
 
 ```python

@@ -1,5 +1,5 @@
 """One-time setup of the isolated heavy venv (numpy<2, pinned numba/llvmlite,
-scikit-learn, hdbscan, umap-learn, rapidfuzz, matplotlib, pyyaml)."""
+scikit-learn, umap-learn, rapidfuzz, matplotlib, pyyaml)."""
 import pathlib
 import shutil
 import subprocess
@@ -16,7 +16,6 @@ _PACKAGES = [
     "numba>=0.60",
     "llvmlite>=0.43",
     "scikit-learn",
-    "hdbscan",
     "umap-learn",
     "rapidfuzz",
     "matplotlib",

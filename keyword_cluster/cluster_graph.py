@@ -54,27 +54,3 @@ def umap_reduce(vectors, n_components=30, n_neighbors=3, random_state=42):
         # random_state=42 (default) → reproducible; None → a fresh layout each run.
         return umap.UMAP(n_components=nc, n_neighbors=nn, min_dist=0.0,
                          metric="cosine", random_state=random_state).fit_transform(V)
-
-
-def hdbscan_cluster(vectors, min_cluster_size=2, min_samples=2, cluster_selection_method="leaf"):
-    """Return HDBSCAN labels (-1 = noise). Imports hdbscan lazily.
-
-    NOTE: no longer on the semantic tier's path (replaced by cosine union-find on
-    whitened embeddings — see ``api._semantic_cluster``). Kept for tests / optional
-    density-based experimentation.
-
-    Defaults ``leaf`` + ``min_samples=2``: for keyword research we want **tight,
-    real ad-group clusters**, not maximal coverage. ``leaf`` keeps fine,
-    ad-group-sized clusters (max ~6-8% of the set), while ``eom`` bloats them into
-    loose mega-buckets ("na rower" grabbing helmets + stands + "fast bike").
-    Low ``min_samples`` (2) suits keyword sets — even sparse micro-topics are worth
-    keeping — and controls how dense a point's neighbourhood must be to seed a
-    cluster.
-    """
-    import hdbscan
-    import numpy as np
-    clusterer = hdbscan.HDBSCAN(min_cluster_size=max(2, min_cluster_size),
-                                min_samples=min_samples,
-                                metric="euclidean",
-                                cluster_selection_method=cluster_selection_method)
-    return clusterer.fit_predict(np.asarray(vectors, dtype=np.float64)).tolist()

@@ -78,7 +78,7 @@ One-time setup (isolated heavy venv via `uv` — its own numpy, never touches th
 
 ```python
 from my.extensions.keyword_cluster.install import install, status
-install()     # numpy, scikit-learn, hdbscan, umap-learn, rapidfuzz, matplotlib
+install()     # numpy, scikit-learn, umap-learn, rapidfuzz, matplotlib
 status()      # {"ok", "installed", "python", "packages"}
 ```
 

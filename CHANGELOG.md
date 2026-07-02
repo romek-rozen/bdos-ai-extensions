@@ -13,9 +13,9 @@ All notable changes to this repo. Dates are ISO (YYYY-MM-DD).
   whitened space instead keeps only tight, coherent ad-group cliques and drops the loose tail to
   `noise`. New `threshold` param (per-set self-tune, 0.75–0.85; recipe in the skill); the ZCA
   background is now the default whitening (auto-downloaded on demand) and the `0.8` cutoff is
-  calibrated on it. UMAP stays for the `viz=True` 2D scatter; `umap_reduce`/`hdbscan_cluster`
-  remain in `cluster_graph` for viz/experiments. Removed the unused `seed`/`umap_dim` params from
-  `cluster()`.
+  calibrated on it. UMAP stays for the `viz=True` 2D scatter (`umap_reduce` remains in
+  `cluster_graph`); `hdbscan` is dropped entirely (function, test, and the heavy-venv dep).
+  Removed the unused `seed`/`umap_dim` params from `cluster()`.
 
 ## 2026-07-02
 

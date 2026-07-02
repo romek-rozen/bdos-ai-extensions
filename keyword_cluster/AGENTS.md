@@ -55,7 +55,7 @@ Use it once you already have keyword ideas — it structures them, it does not f
   keyword corpus per model — see
   [romek-rozen/polish-whitening-backgrounds](https://github.com/romek-rozen/polish-whitening-backgrounds)
   and `keyword_cluster/backgrounds/README.md`.
-- **Run the semantic tier with the heavy venv's Python.** It imports `hdbscan`/`umap`/`numpy`
+- **Run the semantic tier with the heavy venv's Python.** It imports `umap`/`numpy`
   in the CURRENT process, so those packages must be importable — invoke via
   `from my.extensions.keyword_cluster.install import venv_python` (run the code with that
   interpreter), not the plain BDOS Python.
