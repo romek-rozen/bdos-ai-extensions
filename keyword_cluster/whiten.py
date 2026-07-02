@@ -11,6 +11,11 @@ def _l2(X):
 def whiten_batch(X, reduce_dim=128, shrinkage=1e-3):
     X = _l2(np.asarray(X, dtype=np.float64))
     n, d = X.shape
+    # A single sample has no covariance to whiten; np.cov on one observation
+    # yields NaN and a "Degrees of freedom <= 0" RuntimeWarning. Return the
+    # L2-normalized input unchanged.
+    if n < 2:
+        return X
     k = min(reduce_dim, d, max(1, n - 1))
     # PCA reduce for a well-conditioned covariance on small batches
     Xc = X - X.mean(axis=0, keepdims=True)

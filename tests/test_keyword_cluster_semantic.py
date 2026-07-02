@@ -89,6 +89,28 @@ class TestWhiten(unittest.TestCase):
         self.assertTrue(np.allclose(norms, 1.0, atol=1e-6))
         self.assertTrue(np.isfinite(W).all())
 
+    def test_whiten_single_row_no_warning(self):
+        import warnings
+
+        from keyword_cluster.whiten import whiten_batch
+        rng = np.random.default_rng(1)
+        X = rng.normal(size=(1, 32))
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", RuntimeWarning)
+            W = whiten_batch(X)
+        self.assertEqual(W.shape, (1, 32))
+        self.assertTrue(np.isfinite(W).all())
+        self.assertTrue(np.allclose(np.linalg.norm(W, axis=1), 1.0, atol=1e-6))
+
+    def test_whiten_rank_deficient(self):
+        from keyword_cluster.whiten import whiten_batch
+        rng = np.random.default_rng(2)
+        X = rng.normal(size=(3, 32))  # n < d: rank-deficient batch
+        W = whiten_batch(X)
+        self.assertEqual(W.shape[0], 3)
+        self.assertTrue(np.isfinite(W).all())
+        self.assertTrue(np.allclose(np.linalg.norm(W, axis=1), 1.0, atol=1e-6))
+
 
 if __name__ == "__main__":
     unittest.main()
