@@ -134,7 +134,7 @@ class TestVizFailureIsolated(unittest.TestCase):
     def test_scatter_exception_does_not_sink_result(self):
         from keyword_cluster import api
         members = [{"text": "a"}, {"text": "b"}]
-        with mock.patch("keyword_cluster.embed.embed", return_value=[[0.0], [1.0]]), \
+        with mock.patch("keyword_cluster.api.embed", return_value=[[0.0], [1.0]]), \
                 mock.patch("keyword_cluster.cluster_graph.hdbscan_cluster", return_value=[0, 0]), \
                 mock.patch("keyword_cluster.viz.scatter", side_effect=ValueError("boom")):
             result = api._semantic_cluster(
@@ -160,6 +160,28 @@ class TestScatterTinyInput(unittest.TestCase):
             with tempfile.TemporaryDirectory() as d:
                 path = scatter([[0.1, 0.2]] * n, [0] * n, ["k"] * n, out_dir=d)
                 self.assertTrue(os.path.exists(path))
+
+
+class TestMethodValidation(unittest.TestCase):
+    def test_unknown_method_returns_ok_false(self):
+        from keyword_cluster import cluster
+        result = cluster(["a", "b"], method="foo")
+        self.assertFalse(result["ok"])
+        self.assertIn("unknown method", result["error"])
+
+
+@unittest.skipUnless(HAVE_NUMPY, "numpy required")
+class TestSemanticBadBackground(unittest.TestCase):
+    """Semantic path stays ok-keyed when the background dir is missing."""
+
+    def test_bad_background_returns_ok_false(self):
+        from keyword_cluster import api
+        with mock.patch("keyword_cluster.api.embed", return_value=[[0.1, 0.2], [0.3, 0.4]]):
+            result = api.cluster(
+                ["a", "b"], method="semantic", whitening_background="/no/such/dir")
+        self.assertFalse(result["ok"])
+        self.assertIn("error", result)
+        self.assertTrue(result["error"])
 
 
 if __name__ == "__main__":

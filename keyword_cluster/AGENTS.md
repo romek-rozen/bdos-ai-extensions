@@ -47,6 +47,12 @@ Use it once you already have keyword ideas — it structures them, it does not f
 - **Batch whitening is the default** (`whitening="batch"`) — ZCA-whitens embeddings to fix
   anisotropy ("all cosines look 0.7") before clustering. Pass `whitening_background=<dir>` to
   whiten against a precomputed background instead.
+- **Run the semantic tier with the heavy venv's Python.** It imports `hdbscan`/`umap`/`numpy`
+  in the CURRENT process, so those packages must be importable — invoke via
+  `from my.extensions.keyword_cluster.install import venv_python` (run the code with that
+  interpreter), not the plain BDOS Python.
+- **Batch whitening (default) favors precision**, and HDBSCAN may mark items as **noise** on
+  very small inputs — cluster larger keyword lists for best results.
 - **Big batches** (embedding hundreds/thousands of keywords) can be slow — run the Python in
   the background and report when done rather than blocking.
 - **Isolated venv.** The heavy venv resolves its own numpy (umap/numba may pin `numpy<2`) and

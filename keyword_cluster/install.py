@@ -1,4 +1,5 @@
-"""One-time setup of the isolated heavy venv (numpy, hdbscan, umap-learn, rapidfuzz, matplotlib)."""
+"""One-time setup of the isolated heavy venv (numpy<2, pinned numba/llvmlite,
+scikit-learn, hdbscan, umap-learn, rapidfuzz, matplotlib, pyyaml)."""
 import pathlib
 import shutil
 import subprocess
@@ -6,7 +7,21 @@ import sys
 
 _PKG_DIR = pathlib.Path(__file__).resolve().parent
 _VENV = _PKG_DIR / ".venv"
-_PACKAGES = ["numpy", "scikit-learn", "hdbscan", "umap-learn", "rapidfuzz", "matplotlib"]
+# Pins matter: umap-learn's default resolution pulls an ancient numba/llvmlite
+# (llvmlite 0.36) that only builds on Python <3.10 and fails on 3.12+. Force a
+# modern numba/llvmlite, and numpy<2 for numba compatibility. pyyaml is needed
+# by embed.load_config() so the isolated venv is self-sufficient for config.
+_PACKAGES = [
+    "numpy<2",
+    "numba>=0.60",
+    "llvmlite>=0.43",
+    "scikit-learn",
+    "hdbscan",
+    "umap-learn",
+    "rapidfuzz",
+    "matplotlib",
+    "pyyaml",
+]
 
 
 def venv_python():

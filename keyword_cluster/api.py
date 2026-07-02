@@ -3,8 +3,10 @@ from .similarity import lexical_similarity, fuzzy_similarity, has_rapidfuzz
 from .cluster_graph import union_find_cluster
 from .label import build_cluster
 from .install import venv_python
+from .embed import embed
 
 _DEFAULT_THRESHOLD = {"lexical": 0.5, "fuzzy": 0.7}
+_VALID_METHODS = {"auto", "lexical", "fuzzy", "semantic"}
 
 
 def _coerce(keywords):
@@ -39,7 +41,6 @@ def _resolve_method(method, provider=None, model=None):
 
 
 def _semantic_cluster(members, *, min_cluster_size, provider, model, whitening, whitening_background, viz=False):
-    from .embed import embed
     from .whiten import whiten_batch, load_background, apply_background
     from .cluster_graph import hdbscan_cluster
     texts = [m["text"] for m in members]
@@ -77,13 +78,16 @@ def cluster(keywords, *, method="auto", threshold=None, min_cluster_size=2,
     if not members:
         return {"ok": False, "error": "no keywords provided"}
 
+    if method not in _VALID_METHODS:
+        return {"ok": False, "error": f"unknown method: {method}; use auto|lexical|fuzzy|semantic"}
+
     resolved = _resolve_method(method, provider, model)
     if resolved == "semantic":
         try:
             return _semantic_cluster(members, min_cluster_size=min_cluster_size, provider=provider,
                                      model=model, whitening=whitening, whitening_background=whitening_background,
                                      viz=viz)
-        except (ImportError, RuntimeError) as e:
+        except Exception as e:
             return {"ok": False, "error": f"semantic tier failed: {e}. Run install() and configure .env."}
 
     sim_fn = fuzzy_similarity if resolved == "fuzzy" else lexical_similarity

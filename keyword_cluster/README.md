@@ -110,7 +110,7 @@ from my.extensions.keyword_cluster import cluster
 | `min_cluster_size` | `int` | `2` | Drop clusters smaller than this |
 | `provider` | `str \| None` | config | Override embedding provider (semantic) |
 | `model` | `str \| None` | config | Override embedding model (semantic) |
-| `whitening` | `str` | `"batch"` | `"batch"` ZCA whitening of embeddings (semantic), or falsy to skip |
+| `whitening` | `str` | `"batch"` | `"batch"` (default) applies batch ZCA whitening of embeddings (semantic); `"none"` skips it |
 | `viz` | `bool` | `False` | Also render a UMAP scatter PNG (semantic) |
 | `whitening_background` | `str \| None` | `None` | Path to a precomputed background (`mu_A.npy`/`W_A.npy`) to whiten against instead of the batch |
 

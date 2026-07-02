@@ -4,7 +4,7 @@ Every public function returns a dict (or list of dicts) with an `ok` key; on fai
 `{"ok": False, "error": "..."}`. Import paths shown are the in-BDOS paths
 (`my.extensions.<package>`). Run with the BDOS venv Python.
 
-Contents: [crawl4ai](#crawl4ai) · [landing_audit](#landing_audit) · [schema_check](#schema_check)
+Contents: [crawl4ai](#crawl4ai) · [landing_audit](#landing_audit) · [schema_check](#schema_check) · [keyword_cluster](#keyword_cluster)
 · [url_health](#url_health) · [page_monitor](#page_monitor) · [content_compare](#content_compare)
 · [marginal_ers](#marginal_ers) · [ngram_pro](#ngram_pro)
 
