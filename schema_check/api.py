@@ -218,6 +218,51 @@ def _availability_ok(value) -> bool:
     return token in _AVAILABILITY_TOKENS
 
 
+def _is_aggregate_offer(offer: dict) -> bool:
+    """True if the offer node is an AggregateOffer (a price range)."""
+    raw = offer.get("@type", "")
+    types = raw if isinstance(raw, list) else [raw]
+    return any("AggregateOffer" in str(t) for t in types)
+
+
+def _validate_offer(offer: dict) -> tuple[list[str], list[str]]:
+    """Validate a single offer node → (missing_required, issues).
+
+    A plain `Offer` requires price + priceCurrency + availability. An
+    `AggregateOffer` (a price range) instead carries `lowPrice`/`highPrice`
+    and no availability of its own, so either bound satisfies the price
+    requirement and availability is not required.
+    """
+    missing: list[str] = []
+    issues: list[str] = []
+    aggregate = _is_aggregate_offer(offer)
+
+    if aggregate:
+        if not (_has_value(offer, "lowPrice") or _has_value(offer, "highPrice")):
+            missing.append("offers.lowPrice")
+            issues.append(
+                "Missing required offer field: lowPrice/highPrice (AggregateOffer)."
+            )
+    elif not _has_value(offer, "price"):
+        missing.append("offers.price")
+        issues.append("Missing required offer field: price.")
+
+    if not _has_value(offer, "priceCurrency"):
+        missing.append("offers.priceCurrency")
+        issues.append("Missing required offer field: priceCurrency.")
+
+    if not aggregate:
+        if not _has_value(offer, "availability"):
+            missing.append("offers.availability")
+            issues.append("Missing required offer field: availability.")
+        elif not _availability_ok(offer.get("availability")):
+            issues.append(
+                f"offers.availability value not recognized: "
+                f"{offer.get('availability')!r}."
+            )
+    return missing, issues
+
+
 def validate_product(url: str, timeout: int = 60) -> dict:
     """Validate a page's Product structured data for Merchant Center readiness.
 
@@ -270,15 +315,9 @@ def validate_product(url: str, timeout: int = 60) -> dict:
         missing_required.append("offers")
         issues.append("Missing required field: offers.")
     else:
-        for field in OFFER_REQUIRED:
-            if not _has_value(offer, field):
-                missing_required.append(f"offers.{field}")
-                issues.append(f"Missing required offer field: {field}.")
-            elif field == "availability" and not _availability_ok(offer.get("availability")):
-                issues.append(
-                    f"offers.availability value not recognized: "
-                    f"{offer.get('availability')!r}."
-                )
+        offer_missing, offer_issues = _validate_offer(offer)
+        missing_required.extend(offer_missing)
+        issues.extend(offer_issues)
 
     # Recommended fields.
     for field in RECOMMENDED_FIELDS:
