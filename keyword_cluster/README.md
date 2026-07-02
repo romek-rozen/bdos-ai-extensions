@@ -72,14 +72,23 @@ from my.extensions.keyword_cluster.install import status
 status()           # {"ok": True, "installed": bool, "python": ..., "packages": [...]}
 ```
 
-Then pick an embedding provider (below) and give it credentials:
+Then pick an embedding provider (below) and give it credentials. `install()` already created
+`keyword_cluster/.env` for you — you just paste a key into it. Not sure what's configured? Ask:
 
-1. Copy `keyword_cluster/.env.example` → `keyword_cluster/.env` and paste your API key
-   (not needed for Ollama).
-2. For Ollama (local, free, no key), pull a model first:
+```python
+from my.extensions.keyword_cluster.install import env_status
+print(env_status()["message"])   # tells you exactly what to do next
+```
+
+1. Open `keyword_cluster/.env` and paste **one** API key —
+   `OPENROUTER_API_KEY=...` (recommended, https://openrouter.ai/keys) or
+   `OPENAI_API_KEY=...` (https://platform.openai.com/api-keys). Quotes are fine; `.env` is
+   gitignored, so your key never leaves your machine.
+2. Or skip keys entirely with Ollama (local, free) — pull a model first:
    ```bash
    ollama pull qwen3-embedding:4b
    ```
+   then set `provider: ollama` in `config.yaml`.
 
 ## Providers & models
 
@@ -170,15 +179,42 @@ else:
 Plain strings work too: `cluster(["running shoes", "trail running shoes", "hiking boots"])` —
 just without the volume/CPC/competition rollups.
 
-## Batch whitening, in plain language
+## Whitening, in plain language
 
 Raw embeddings are **anisotropic**: they all squash into a narrow cone, so *every* pair of
-keywords looks ~0.7 similar and nothing separates cleanly ("all cosines look 0.7"). Batch
-**ZCA whitening** re-centers and re-scales the batch of embeddings so the "everyone is 0.7"
-baseline is removed and genuinely-related keywords stand out — which makes the clustering
-much cleaner. It's on by default (`whitening="batch"`). If you have a precomputed background
-(a big representative sample), pass `whitening_background=<dir>` to whiten against that
-instead of the current batch.
+keywords looks ~0.7 similar and nothing separates cleanly ("all cosines look 0.7"). **ZCA
+whitening** re-centers and re-scales the embeddings so that "everyone is 0.7" baseline is
+removed and genuinely-related keywords stand out — which makes the clustering much cleaner.
+
+The default is `whitening="batch"`. It is now **shrinkage-stabilized** (PCA-reduced,
+well-regularized covariance), so it's safe on small keyword sets and no longer over-merges —
+a single keyword is passed through unchanged.
+
+### Resolution order (semantic tier)
+
+When clustering semantically, the whitening actually applied is resolved in this order:
+
+1. **Explicit background** — `whitening_background=<dir>` (a dir with `mu_A.npy` + `W_A.npy`).
+2. **Auto-discovered background** matching the resolved `(model, dim)` at
+   `keyword_cluster/backgrounds/<model-slug>/dim<N>/{mu_A.npy, W_A.npy}` (skipped when
+   `whitening="none"`).
+3. **Well-regularized batch whitening** (`whitening="batch"`, the default).
+4. **Raw L2 cosine** — when `whitening="none"` and no explicit background is given.
+
+**Model-slug rule:** model id lowercased, non-alphanumerics → `-`. So
+`qwen/qwen3-embedding-8b` → `qwen-qwen3-embedding-8b`, and dim 4096 → `dim4096`.
+
+### Proper backgrounds vs. batch self-whitening
+
+Batch whitening estimates the covariance from just the handful of keywords you're clustering
+— the weak form. A **proper background** is fitted once on a **large keyword corpus** per
+model, then reused for every run. Generate one with the ZCA pipeline in
+[`romek-rozen/polish-whitening-backgrounds`](https://github.com/romek-rozen/polish-whitening-backgrounds)
+and drop it in — see [`keyword_cluster/backgrounds/README.md`](backgrounds/README.md) for the
+drop-in convention.
+
+> `.npy` matrices can be large (a 4096-dim `W` is ~128 MB) and are **gitignored by default** —
+> keep them local or ship only small MRL-truncated dims.
 
 ## Troubleshooting
 

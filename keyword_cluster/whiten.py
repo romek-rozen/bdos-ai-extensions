@@ -38,3 +38,26 @@ def load_background(path):
 
 def apply_background(X, mu, W):
     return _l2((_l2(np.asarray(X, dtype=np.float64)) - mu) @ W)
+
+
+_BG_DIR = pathlib.Path(__file__).resolve().parent / "backgrounds"
+
+
+def _model_slug(model: str) -> str:
+    """Filesystem-safe slug for a model id (qwen/qwen3-embedding-8b → qwen-qwen3-embedding-8b)."""
+    return "".join(c if c.isalnum() else "-" for c in (model or "").lower()).strip("-")
+
+
+def find_background(model, dim):
+    """Locate a shipped/dropped-in whitening background for (model, dim), else None.
+
+    Convention: ``backgrounds/<model-slug>/dim<N>/{mu_A.npy, W_A.npy}``. This lets a
+    user generate a proper ZCA background from a large keyword corpus (per model) and
+    have it used automatically — far better than batch self-whitening on a tiny set.
+    """
+    if not model or not dim:
+        return None
+    d = _BG_DIR / _model_slug(model) / f"dim{int(dim)}"
+    if (d / "mu_A.npy").exists() and (d / "W_A.npy").exists():
+        return str(d)
+    return None

@@ -77,27 +77,68 @@ install()     # numpy, scikit-learn, hdbscan, umap-learn, rapidfuzz, matplotlib
 status()      # {"ok", "installed", "python", "packages"}
 ```
 
-Then configure a provider in `keyword_cluster/config.yaml` and add credentials:
+### API keys — check readiness first, then guide the user
 
-- Copy `keyword_cluster/.env.example` → `keyword_cluster/.env`, paste the key.
-- Providers: **openrouter** `qwen/qwen3-embedding-8b` (default, `OPENROUTER_API_KEY`);
-  **openai** `text-embedding-3-large` / `-small` (`OPENAI_API_KEY`); **ollama**
-  `qwen3-embedding:4b` / `:8b` / `:0.6b` (local, no key — `ollama pull qwen3-embedding:4b`).
+`install()` auto-creates `keyword_cluster/.env` from the template. Before running the semantic
+tier, **check which provider is ready and walk a non-technical user through it**:
 
-Run semantic explicitly with `cluster(ideas, method="semantic")`, optionally
-`viz=True` to save a UMAP scatter PNG (path in `viz_path`).
+```python
+from my.extensions.keyword_cluster.install import env_status
+s = env_status()
+print(s["message"])          # ready → which providers; not ready → exact next steps
+# s = {"ready": bool, "providers": {"openrouter","openai","ollama"}, "env_path": ...}
+```
 
-## Batch whitening
+If `s["ready"]` is `False`, show the user `s["message"]` verbatim and offer the two easy paths,
+then wait until they've done one before clustering:
+
+- **Local & free (no key):** install [Ollama](https://ollama.com), then `ollama pull
+  qwen3-embedding:4b`. Set `provider: ollama` in `config.yaml`.
+- **API key:** open the file at `s["env_path"]` and paste ONE key —
+  `OPENROUTER_API_KEY=...` (recommended, https://openrouter.ai/keys) or `OPENAI_API_KEY=...`
+  (https://platform.openai.com/api-keys). Quotes optional; `.env` is gitignored.
+
+Providers/models: **openrouter** `qwen/qwen3-embedding-8b` (default); **openai**
+`text-embedding-3-large` / `-small`; **ollama** `qwen3-embedding:4b` / `:8b` / `:0.6b`.
+
+Then run semantic explicitly with `cluster(ideas, method="semantic")`, optionally `viz=True`
+to save a UMAP scatter PNG (path in `viz_path`).
+
+## Whitening
 
 Default `whitening="batch"` ZCA-whitens the embeddings to fix anisotropy — raw embeddings
-squash into a cone where "all cosines look 0.7", so whitening removes that baseline and lets
-related keywords separate. Pass `whitening_background=<dir>` (with `mu_A.npy`/`W_A.npy`) to
-whiten against a precomputed background instead.
+squash into a cone where "all cosines look ~0.7", so whitening removes that baseline and lets
+related keywords separate. Batch whitening is now **shrinkage-stabilized** (PCA-reduced,
+regularized covariance), so it is safe on small keyword sets — it no longer over-merges themes.
+
+Resolution order (semantic tier):
+
+1. explicit `whitening_background=<dir>` (a dir with `mu_A.npy` + `W_A.npy`);
+2. else an **auto-discovered** background for the resolved `(model, dim)` at
+   `keyword_cluster/backgrounds/<model-slug>/dim<N>/{mu_A.npy, W_A.npy}`;
+3. else shrinkage-stabilized batch whitening;
+4. `whitening="none"` → raw L2-normalized embeddings.
+
+A proper background is ZCA fitted on a **large keyword corpus per model** (far better than
+batch self-whitening on a tiny set). Grab ready-made ones from
+https://github.com/romek-rozen/polish-whitening-backgrounds and drop the two `.npy` files into
+the folder above — they are picked up automatically, no config. See
+`keyword_cluster/backgrounds/README.md` for the drop-in convention.
+
+## How the semantic tier clusters
+
+embed → (background/batch whitening) → **UMAP-reduce → HDBSCAN (`leaf` selection)** → a cosine
+fallback for tiny sets. Reducing with UMAP before HDBSCAN is what breaks a 200-keyword list
+into ~20 coherent ad-group clusters instead of one giant blob; it's skipped for `n < 25` (small
+sets use the fallback so they still cluster). Embeddings are **cached** in a local SQLite store
+(`keyword_cluster/cache/`, gitignored) keyed by `(provider, model, dim, text)`, so repeated
+keywords are never re-embedded — first run is slow, re-runs are near-instant.
 
 ## Gotchas
 
 - `method="auto"` silently degrades to lexical/fuzzy when the semantic prerequisites are
   missing — always report `method_used`.
 - Semantic failures return `ok: False` with a "Run install() and configure .env." hint.
-- Embedding hundreds of keywords can be slow — run the Python in the background for big batches.
+- First-time embedding of hundreds of keywords is slow — run the Python in the background;
+  re-runs hit the cache (`cache.stats()` / `cache.clear()`).
 - `install()` needs `uv` on PATH; Ollama must be running with the model pulled.

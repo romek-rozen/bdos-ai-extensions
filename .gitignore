@@ -29,3 +29,9 @@ keyword_cluster/.env
 
 # Claude Code local state / worktrees
 .claude/
+
+# whitening backgrounds — large matrices stay local
+keyword_cluster/backgrounds/**/*.npy
+
+# embedding cache (local, per-machine)
+keyword_cluster/cache/

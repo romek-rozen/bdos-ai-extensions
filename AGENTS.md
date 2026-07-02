@@ -82,8 +82,13 @@ redirect chains is its whole point.
   into ad-group-ready `clusters[]` (+ `noise[]`), each with `total_volume/avg_cpc/
   dominant_competition/representative_keyword/suggested_ad_group/suggested_match_type`. Three
   tiers: lexical (stdlib) → fuzzy (`rapidfuzz`) → semantic (embeddings + HDBSCAN, needs
-  `install()` + `.env`). `method="auto"` degrades quietly — check `method_used`. Batch ZCA
-  whitening on by default. Read-only; hand the structure to the mutation workflow.
+  `install()` + a provider). `install()` auto-creates `.env`; call `env_status()` first and, if
+  not `ready`, show the user its `message` (paste one key — OpenRouter/OpenAI — or use local
+  Ollama). `method="auto"` degrades quietly — check `method_used`. Whitening (default `batch`,
+  shrinkage-stabilized) auto-upgrades to a background at `keyword_cluster/backgrounds/<model-slug>/
+  dim<N>/` when present (fit per model — see romek-rozen/polish-whitening-backgrounds). Run the
+  semantic tier with the heavy venv's Python (`venv_python()`). Read-only; hand the structure to
+  the mutation workflow.
 
 ## Adding a new extension
 

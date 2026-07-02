@@ -28,8 +28,9 @@ Use it once you already have keyword ideas — it structures them, it does not f
 | Call | Returns |
 |---|---|
 | `cluster(keywords, *, method="auto", threshold=None, min_cluster_size=2, provider=None, model=None, whitening="batch", viz=False, whitening_background=None)` | dict: `ok, method_used, clusters[], noise[], viz_path`. Each cluster: `cluster_id, label, members[], size, total_volume, avg_cpc, dominant_competition, representative_keyword, suggested_ad_group, suggested_match_type` |
-| `install()` (`my.extensions.keyword_cluster.install`) | `{"ok", "python", "already"}` — one-time isolated heavy venv (uv) |
+| `install()` (`my.extensions.keyword_cluster.install`) | `{"ok", "python", "already", "env", "next_steps"}` — one-time isolated heavy venv (uv); also auto-creates `.env` and reports key status |
 | `status()` (same module) | `{"ok", "installed": bool, "python", "packages"}` |
+| `env_status()` (same module) | `{"ok", "ready": bool, "providers": {openrouter, openai, ollama}, "env_path", "message"}` — check readiness + a plain-language next step before semantic clustering |
 
 `keywords` accept plain strings or dicts with `text` (+ optional `avg_monthly_searches`,
 `cpc_low`, `cpc_high`, `competition`) — the metric rollups need the dict form.
@@ -40,21 +41,36 @@ Use it once you already have keyword ideas — it structures them, it does not f
   installed *and* a provider is configured; otherwise **fuzzy** (if `rapidfuzz` present),
   otherwise **lexical**. Check `method_used` in the result to see what actually ran; do not
   assume semantic.
-- **Semantic needs the venv + `.env`.** Run `install()`, then copy `keyword_cluster/.env.example`
-  → `.env` and set the provider key (Ollama needs none but must be running + model pulled).
-  Failure comes back as `{"ok": False, "error": "semantic tier failed: ... Run install() and
-  configure .env."}`.
-- **Batch whitening is the default** (`whitening="batch"`) — ZCA-whitens embeddings to fix
-  anisotropy ("all cosines look 0.7") before clustering. Pass `whitening_background=<dir>` to
-  whiten against a precomputed background instead.
+- **Semantic needs the venv + a provider.** Run `install()` (it auto-creates `.env`). Before
+  clustering, call `env_status()` and, if `ready` is False, show the user `message` verbatim —
+  it tells them to either paste ONE key into `env_path` (`OPENROUTER_API_KEY` recommended, or
+  `OPENAI_API_KEY`) or use local Ollama (no key). The `.env` loader tolerates quoted values
+  (`KEY="..."`). Failure comes back as `{"ok": False, "error": "semantic tier failed: ..."}`.
+- **Whitening (default `whitening="batch"`) — auto-upgrades to a background when present.**
+  ZCA whitening fixes embedding anisotropy ("all cosines look 0.7"). Resolution order:
+  an explicit `whitening_background=<dir>` → an **auto-discovered** background matching the
+  resolved `(model, dim)` under `keyword_cluster/backgrounds/<model-slug>/dim<N>/`
+  (`mu_A.npy`+`W_A.npy`) → well-regularized **batch** whitening (shrinkage-stabilized, safe on
+  small sets) → raw L2 when `whitening="none"`. Proper backgrounds are fitted on a large
+  keyword corpus per model — see
+  [romek-rozen/polish-whitening-backgrounds](https://github.com/romek-rozen/polish-whitening-backgrounds)
+  and `keyword_cluster/backgrounds/README.md`.
 - **Run the semantic tier with the heavy venv's Python.** It imports `hdbscan`/`umap`/`numpy`
   in the CURRENT process, so those packages must be importable — invoke via
   `from my.extensions.keyword_cluster.install import venv_python` (run the code with that
   interpreter), not the plain BDOS Python.
 - **Batch whitening (default) favors precision**, and HDBSCAN may mark items as **noise** on
   very small inputs — cluster larger keyword lists for best results.
-- **Big batches** (embedding hundreds/thousands of keywords) can be slow — run the Python in
-  the background and report when done rather than blocking.
+- **Semantic pipeline:** embed → (background/batch whitening) → **UMAP-reduce → HDBSCAN
+  (`leaf`)** → small-set cosine fallback. UMAP-before-HDBSCAN is what turns one blurry
+  mega-cluster into many coherent ad-group clusters; it's skipped for `n < 25` (small sets use
+  the cosine fallback). Tune with `min_cluster_size`.
+- **Embeddings are cached** in a local SQLite store (`keyword_cluster/cache/`, gitignored),
+  keyed by `(provider, model, dim, text)` — repeated keywords are never re-embedded and
+  duplicates in one call collapse to a single request. `cache.stats()` / `cache.clear()` at
+  `my.extensions.keyword_cluster.cache`.
+- **Big batches** (embedding hundreds/thousands of keywords) can be slow on the FIRST run —
+  run the Python in the background; re-runs are near-instant from the cache.
 - **Isolated venv.** The heavy venv resolves its own numpy (umap/numba may pin `numpy<2`) and
   never touches the BDOS venv.
 

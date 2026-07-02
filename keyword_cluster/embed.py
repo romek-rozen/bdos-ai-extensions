@@ -142,12 +142,25 @@ def _embed_ollama(texts, cfg):
 
 
 def embed(texts, *, provider=None, model=None, base_url=None, dim=None, batch_size=256):
-    """Embed a list of texts via the configured provider; returns a flat list of vectors."""
+    """Embed a list of texts via the configured provider; returns a flat list of vectors.
+
+    Results are cached in a local SQLite store keyed by (provider, model, dim, text),
+    so repeated keywords are never re-embedded (and duplicates within one call collapse
+    to a single request).
+    """
+    from . import cache
     cfg = load_config(
         {"provider": provider, "model": model, "base_url": base_url, "dim": dim}
     )
-    fn = _embed_ollama if cfg["provider"] == "ollama" else _embed_openai_compatible
-    vecs = []
-    for i in range(0, len(texts), batch_size):
-        vecs.extend(fn(texts[i:i + batch_size], cfg))
-    return vecs
+    key_dim = cfg["dim"] or 0
+    cached = cache.get_many(cfg["provider"], cfg["model"], key_dim, texts)
+    misses = [t for t in dict.fromkeys(texts) if t not in cached]  # unique, order-preserving
+    if misses:
+        fn = _embed_ollama if cfg["provider"] == "ollama" else _embed_openai_compatible
+        fresh = {}
+        for i in range(0, len(misses), batch_size):
+            chunk = misses[i:i + batch_size]
+            fresh.update(zip(chunk, fn(chunk, cfg)))
+        cache.put_many(cfg["provider"], cfg["model"], key_dim, fresh)
+        cached.update(fresh)
+    return [cached[t] for t in texts]

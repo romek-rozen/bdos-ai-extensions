@@ -11,7 +11,10 @@ What it does:
   1. Locates your BDOS-AI directory (arg > $BDOS_DIR > auto-detect > CWD).
   2. Links every extension package (top-level dir with __init__.py) into my/extensions/.
   3. Links every skill under skills/ into my/skills/.
-  4. Prints the next step (`bdos update --regenerate`) and optional per-extension install.
+  4. For every extension shipping a `.env.example`, creates a `.env` (never overwrites) and
+     prints a 🔑 checklist of which credentials to fill in and where (e.g. keyword_cluster,
+     d4s). `.env` files are gitignored — keys stay on the machine.
+  5. Prints the next step (`bdos update --regenerate`) and optional per-extension install.
 
 Modes:
   --copy          copy files instead of symlinking (use if symlinks are awkward)

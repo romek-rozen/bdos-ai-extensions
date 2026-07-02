@@ -40,17 +40,58 @@ def _resolve_method(method, provider=None, model=None):
     return "lexical"
 
 
+def _cosine_threshold_labels(V, threshold, min_cluster_size):
+    """Fallback labels: union-find over cosine similarity of L2-normalized rows.
+
+    HDBSCAN needs density and returns all-noise on very small lists; this keeps
+    small keyword sets usable. Returns HDBSCAN-style labels (-1 = noise), with
+    groups smaller than ``min_cluster_size`` left as noise.
+    """
+    from .cluster_graph import union_find_cluster
+    n = len(V)
+    groups = union_find_cluster(list(range(n)), lambda a, b: float(V[a] @ V[b]), threshold)
+    labels = [-1] * n
+    cid = 0
+    for g in groups:
+        if len(g) >= min_cluster_size:
+            for idx in g:
+                labels[idx] = cid
+            cid += 1
+    return labels
+
+
 def _semantic_cluster(members, *, min_cluster_size, provider, model, whitening, whitening_background, viz=False):
-    from .whiten import whiten_batch, load_background, apply_background
-    from .cluster_graph import hdbscan_cluster
+    import numpy as np
+    from .whiten import whiten_batch, load_background, apply_background, find_background, _l2
+    from .cluster_graph import hdbscan_cluster, umap_reduce
+    from .embed import load_config
     texts = [m["text"] for m in members]
-    vecs = embed(texts, provider=provider, model=model)
-    if whitening_background:
-        mu, W = load_background(whitening_background)
-        vecs = apply_background(vecs, mu, W)
+    raw = np.asarray(embed(texts, provider=provider, model=model), dtype=float)
+    raw_l2 = _l2(raw)
+    dim = raw.shape[1] if raw.size else 0
+    eff_model = load_config({"provider": provider, "model": model})["model"]
+    # Prefer an explicit or auto-discovered background (proper ZCA from a large
+    # keyword corpus); fall back to well-regularized batch whitening; "none" = raw L2.
+    background = whitening_background
+    if background is None and whitening != "none":
+        background = find_background(eff_model, dim)
+    if background:
+        mu, W = load_background(background)
+        vecs = apply_background(raw, mu, W)
     elif whitening == "batch":
-        vecs = whiten_batch(vecs)
-    labels = hdbscan_cluster(vecs, min_cluster_size=min_cluster_size)
+        vecs = whiten_batch(raw)
+    else:
+        vecs = raw_l2
+    # UMAP-reduce before density clustering (sharpens clusters; no-op for small n).
+    reduced = umap_reduce(vecs)
+    labels = hdbscan_cluster(reduced, min_cluster_size=min_cluster_size)
+    # Small-set fallback: HDBSCAN needs density and returns all-noise on tiny
+    # lists (a handful of keywords). Whitening decorrelates a tiny batch toward
+    # orthogonality, so fall back on the RAW L2 embeddings (clean cosine gap:
+    # within-theme ~0.85 vs cross ~0.6) so small lists still cluster.
+    if not any(lab >= 0 for lab in labels):
+        labels = _cosine_threshold_labels(raw_l2, threshold=0.72,
+                                          min_cluster_size=min_cluster_size)
     groups, noise = {}, []
     for i, lab in enumerate(labels):
         if lab < 0:
