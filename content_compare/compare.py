@@ -7,8 +7,12 @@ counts and (optionally) keyword coverage. `compare` runs `analyze` over many
 URLs and builds a side-by-side comparison plus a content-gap section.
 
 Everything is diacritics-insensitive for keyword matching (NFKD normalize +
-strip combining marks + lowercase), so "buty" matches "Búty"/"BUTY" and Polish
-forms compare cleanly.
+strip combining marks + explicit Latin fold for ł/Ł/đ/ø + lowercase), so
+"buty" matches "Búty"/"BUTY", "membrana" matches "membraną", and Polish forms
+compare cleanly. Both single words and phrases match on word boundaries.
+
+Pages are fetched via the shared crawl4ai layer (rendered browser, avoids
+anti-bot blocking) when available, with a charset-aware urllib fallback.
 
 Examples (import path inside BDOS):
     from my.extensions.content_compare import analyze, compare
@@ -29,7 +33,24 @@ USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 )
-DEFAULT_TIMEOUT = 20
+DEFAULT_TIMEOUT = 60
+
+# Non-decomposable Latin letters that NFKD does NOT split into base+combining
+# mark (so unicodedata.combining() can't strip them). Folded explicitly so
+# matching is truly diacritics-insensitive for Polish and neighbours.
+_LATIN_FOLD_MAP = {
+    "ł": "l", "Ł": "l",
+    "đ": "d", "Đ": "d",
+    "ø": "o", "Ø": "o",
+    "ß": "ss",
+    "æ": "ae", "Æ": "ae",
+    "œ": "oe", "Œ": "oe",
+    "ð": "d", "Ð": "d",
+    "þ": "th", "Þ": "th",
+    "ħ": "h", "Ħ": "h",
+    "ı": "i", "İ": "i",
+}
+_LATIN_FOLD_TABLE = {ord(k): v for k, v in _LATIN_FOLD_MAP.items()}
 
 # Tags whose text content must never count as readable body copy.
 _SKIP_TAGS = {"script", "style", "noscript", "template", "svg"}
@@ -42,7 +63,13 @@ _WORD_RE = re.compile(r"[^\W\d_]+", re.UNICODE)
 # ---------------------------------------------------------------------------
 
 def _fold(text: str) -> str:
-    """Diacritics-insensitive fold: NFKD normalize, drop combining marks, lower."""
+    """Diacritics-insensitive fold.
+
+    NFKD normalize + drop combining marks handles decomposable accents (é, ą,
+    ń, ...). Then an explicit map folds the non-decomposable Latin letters
+    (ł/Ł, đ, ø, ...) that NFKD leaves intact. Finally lowercase.
+    """
+    text = text.translate(_LATIN_FOLD_TABLE)
     normalized = unicodedata.normalize("NFKD", text)
     normalized = "".join(c for c in normalized if not unicodedata.combining(c))
     return normalized.lower()
@@ -58,10 +85,15 @@ def _count_occurrences(keyword: str, haystack_folded: str) -> int:
     needle = _fold(keyword).strip()
     if not needle:
         return 0
-    # Whole-token match for single words, substring match for phrases.
+    # Word-boundary match for both single words and phrases. For phrases,
+    # collapse internal whitespace to \s+ so any run of whitespace matches,
+    # and wrap in \b...\b to avoid over-counting inside longer words/runs.
     if " " in needle:
-        return haystack_folded.count(needle)
-    return len(re.findall(r"\b" + re.escape(needle) + r"\b", haystack_folded))
+        parts = [re.escape(p) for p in needle.split()]
+        pattern = r"\b" + r"\s+".join(parts) + r"\b"
+    else:
+        pattern = r"\b" + re.escape(needle) + r"\b"
+    return len(re.findall(pattern, haystack_folded))
 
 
 # ---------------------------------------------------------------------------
@@ -131,12 +163,28 @@ class _PageParser(HTMLParser):
         return re.sub(r"\s+", " ", " ".join(self._text_parts)).strip()
 
 
-def _fetch(url: str, timeout: int) -> str:
-    """Fetch a URL with a browser-like User-Agent. Returns decoded HTML."""
+def _get_html(url: str, timeout: int) -> str:
+    """Fetch a URL as HTML, human-like when possible.
+
+    Prefers the shared crawl4ai fetch layer (rendered browser, avoids anti-bot
+    blocking, charset-aware). Falls back to a charset-aware urllib fetch when
+    that layer is unavailable.
+    """
+    try:
+        from my.extensions.crawl4ai import fetch_html as _cf
+    except Exception:
+        _cf = None
+    if _cf:
+        r = _cf(url, timeout=timeout)
+        if r.get("ok"):
+            return r.get("html", "") or ""
+        raise OSError(r.get("error") or "fetch failed")
+    # Charset-aware urllib fallback.
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     with urllib.request.urlopen(req, timeout=timeout) as resp:
+        charset = resp.headers.get_content_charset() or "utf-8"
         raw = resp.read()
-    return raw.decode("utf-8", errors="ignore")
+    return raw.decode(charset, errors="replace")
 
 
 # ---------------------------------------------------------------------------
@@ -163,7 +211,7 @@ def analyze(url: str, keywords: list[str] | None = None, timeout: int = DEFAULT_
         in_title, in_headings}). On error: ``{"ok": False, "error": "..."}``.
     """
     try:
-        html = _fetch(url, timeout)
+        html = _get_html(url, timeout)
     except (urllib.error.URLError, urllib.error.HTTPError, ValueError, OSError) as exc:
         return {"ok": False, "url": url, "error": f"fetch failed: {exc}"}
 

@@ -16,7 +16,14 @@ import re
 from html.parser import HTMLParser
 
 # Tags whose text content is not part of the visible page copy.
-_NON_TEXT_TAGS = {"script", "style", "noscript", "template", "head"}
+#
+# NOTE: "head" is deliberately NOT in this set. Using it as a suppression tag is
+# unsafe because many real pages omit the </head> tag: the closing </head> then
+# never fires, _suppress_depth never returns to 0, and the ENTIRE <body> is
+# excluded from visible_text() → word_count=0 and false "thin content" / "no CTA"
+# flags. Instead we suppress the individual head-level text tags (title/script/
+# style/noscript) directly, which is robust to an unclosed </head>.
+_NON_TEXT_TAGS = {"script", "style", "noscript", "template", "title"}
 
 # Tags that count as interactive / clickable for CTA detection.
 _CTA_TAGS = {"a", "button"}

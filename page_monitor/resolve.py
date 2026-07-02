@@ -60,9 +60,14 @@ def url_slug(url: str) -> str:
 
 
 def timestamp(dt: datetime | None = None) -> str:
-    """Filesystem-safe timestamp, second precision (sorts chronologically)."""
+    """Filesystem-safe timestamp with microsecond precision.
+
+    Microseconds are appended so two snapshots taken in the same second never
+    collide (which would let diff() compare a file to itself). The fixed-width
+    zero-padded format keeps lexical sort == chronological sort.
+    """
     dt = dt or datetime.now()
-    return dt.strftime("%Y-%m-%d-%H-%M-%S")
+    return dt.strftime("%Y-%m-%d-%H-%M-%S-%f")
 
 
 def snapshot_dir(url: str) -> Path:
@@ -78,7 +83,11 @@ def snapshot_path(url: str, dt: datetime | None = None) -> Path:
 class _TextExtractor(HTMLParser):
     """Collect visible text, skipping <script>/<style> and similar noise."""
 
-    _SKIP = {"script", "style", "noscript", "template", "head", "svg"}
+    # NOTE: <head> is intentionally NOT skipped wholesale. A page missing a
+    # </head> tag would otherwise leave _skip_depth stuck > 0 and blank the
+    # entire body, making every snapshot identical (monitor goes blind). We
+    # only skip the non-visible elements themselves; <title> text is dropped.
+    _SKIP = {"script", "style", "noscript", "template", "svg", "title"}
     # Tags after which we force a line break, so diffs stay line-oriented.
     _BLOCK = {
         "p", "div", "section", "article", "header", "footer", "li", "ul", "ol",
@@ -92,6 +101,11 @@ class _TextExtractor(HTMLParser):
         self._skip_depth = 0
 
     def handle_starttag(self, tag: str, attrs) -> None:
+        if tag == "body":
+            # Entering the body: clear any skip state left dangling by an
+            # unclosed tag in <head> (e.g. missing </head> or </script>).
+            self._skip_depth = 0
+            return
         if tag in self._SKIP:
             self._skip_depth += 1
         elif tag in self._BLOCK:

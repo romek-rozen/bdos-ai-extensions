@@ -1,6 +1,6 @@
 ---
 name: ext-landing-audit
-description: Audit a landing page for Google Ads quality and relevance signals (no MCP required). Use when the user wants to check a landing/destination URL for a campaign — title, meta description, H1, mobile-friendliness (viewport), structured data, image alt coverage, calls-to-action (EN+PL), thin content and other Ads landing-quality warnings. Pure standard library, runs fully offline.
+description: Audit a landing page for Google Ads quality/relevance signals AND review it as sales copy for conversion. Use when the user wants to check a landing/destination URL for a campaign — technical signals (title, meta description, H1, mobile-friendliness, structured data, image alt, CTAs, thin content) plus a sales-copy/conversion review against copywriting frameworks (AIDA, PAS, FAB, value proposition, social proof, urgency, single clear CTA, objection handling). Technical audit is pure standard library and runs fully offline.
 ---
 
 # ext-landing-audit — landing page audit for Google Ads
@@ -81,6 +81,83 @@ are kept as `{"ok": False, ...}` so you can see which page failed).
 `no clear call-to-action detected`, `page is noindex`.
 
 An empty `flags` list means no major landing-quality issues were detected.
+
+## Sales copy / conversion review
+
+The technical audit above answers *"is this page structurally OK for Ads?"*. It
+does **not** answer *"does this page actually sell?"*. A page can pass every
+technical flag and still convert poorly because the copy is weak. After running
+`audit(url)`, also read the page as **sales copy** and score it against the
+copywriting frameworks below.
+
+### Step 1 — get the readable page text
+
+`audit()` returns structure (title, headings, word count, CTAs) but not the full
+copy. Fetch the rendered page text as clean markdown so you can judge the
+messaging, ideally with the `ext-crawl4ai` extension (full JS render, good for
+SPA/landing pages):
+
+```python
+import sys; sys.stdout.reconfigure(encoding='utf-8')
+# Requires crawl4ai installed (the ext-crawl4ai extension / its venv).
+from my.extensions.crawl4ai import scrape
+page = scrape("https://example.com")   # returns clean markdown of the page
+print(page[:4000])
+```
+
+If `crawl4ai` is not installed, fall back to the raw visible text already
+available from the technical audit (`word_count` and the static HTML it parsed),
+and tell the user the copy review is based on server-rendered HTML only — JS-
+injected copy and CTAs may be missing.
+
+### Step 2 — score the copy against the checklist
+
+Read the page text and evaluate each item. Mark ✅ / ⚠️ / ❌ and give one concrete
+observation per item (quote the page where useful).
+
+- **Headline & value proposition** — Does the H1 / hero state a clear, specific
+  promise (who it's for + what they get)? Generic ("Welcome", "Home") = weak.
+- **Message flow (AIDA / PAS)** — Does the page follow a persuasive arc?
+  - AIDA: Attention (hook) → Interest (relevance/facts) → Desire (outcome) →
+    Action (CTA). Good for most landing pages and ads.
+  - PAS: Problem (name the pain) → Agitate (consequences of inaction) →
+    Solution (product as the fix). Good for offer/service pages.
+- **Benefits over features (FAB)** — Features (what it is) → Advantages (how it's
+  different) → Benefits (why the reader cares). Copy that lists only specs
+  without translating them into outcomes = ⚠️.
+- **Social proof** — Reviews, ratings, testimonials, logos, case studies,
+  customer/usage counts. Present and credible?
+- **Trust signals** — Guarantees, returns/refund policy, security/payment badges,
+  certifications, contact details, real company info.
+- **Urgency / scarcity** — Genuine reason to act now (limited stock, deadline,
+  bonus)? Must be honest, not fake pressure.
+- **Single, unambiguous CTA** — One primary action, repeated, worded as a benefit
+  ("Get my free quote"), visually dominant. Many competing CTAs = ⚠️.
+- **Readability** — Short paragraphs, scannable, subheadings, plain language, no
+  jargon walls. Matches the audience.
+- **Objection handling** — Does the page preempt the obvious "but…" (price, risk,
+  effort, "will it work for me?") with FAQ, guarantee, or proof?
+
+Anchor recommendations to the picked framework: e.g. "The page jumps straight to
+the form (Action) with no Desire step — add an outcome-focused section before the
+CTA (AIDA)."
+
+## Combined report — output format
+
+Present ONE report to the user, in their language, with three parts:
+
+**1. Technical findings** — summarise `r["flags"]` and the key fields (title/meta
+lengths, H1 count, word count, viewport, structured data, alt coverage, CTA
+count). State plainly what passes and what's broken.
+
+**2. Copy / conversion findings** — the checklist above with ✅ / ⚠️ / ❌ and a
+one-line observation each. Name the dominant framework the page uses (or lacks).
+
+**3. Prioritized recommendations** — a single merged, ranked list mixing both
+technical and copy fixes, highest impact first. For each: what to change, why it
+matters for conversions/Ads quality, and (where relevant) tie it to BDOS campaign
+data (e.g. "page flagged `thin content` + no Desire step on a campaign with low
+Conv. Rate → rewrite hero with a benefit-led value prop and a single CTA").
 
 ## Notes
 

@@ -87,15 +87,16 @@ class _LdJsonParser(HTMLParser):
 def _iter_ld_objects(parsed):
     """Yield every dict node inside a parsed JSON-LD value.
 
-    Handles top-level arrays and @graph containers, recursing into nested
-    lists/dicts so a Product nested anywhere is reachable.
+    Fully recurses into ALL nested dict values and list items (not just @graph
+    or top-level lists), so a Product nested under e.g. WebPage.mainEntity or
+    ItemList.itemListElement is reachable. Mirrors the recursion used by
+    landing_audit._extract_jsonld_types.
     """
     if isinstance(parsed, dict):
         yield parsed
-        graph = parsed.get("@graph")
-        if isinstance(graph, list):
-            for node in graph:
-                yield from _iter_ld_objects(node)
+        for value in parsed.values():
+            if isinstance(value, (dict, list)):
+                yield from _iter_ld_objects(value)
     elif isinstance(parsed, list):
         for node in parsed:
             yield from _iter_ld_objects(node)
@@ -120,7 +121,7 @@ def _collect_types(node: dict) -> list[str]:
     return []
 
 
-def extract(url: str, timeout: int = 20) -> dict:
+def extract(url: str, timeout: int = 60) -> dict:
     """Fetch a page and return all JSON-LD blocks it contains.
 
     Returns:
@@ -160,6 +161,7 @@ def extract(url: str, timeout: int = 20) -> dict:
     return {
         "ok": True,
         "url": fetched["url"],
+        "engine": fetched.get("engine"),
         "count": len(blocks),
         "blocks": blocks,
         "types": types,
@@ -180,10 +182,17 @@ def _find_product(blocks: list) -> dict | None:
 
 
 def _has_value(node: dict, field: str) -> bool:
-    """True if `field` is present and non-empty on the node."""
+    """True if `field` is present and non-empty on the node.
+
+    Numeric values (incl. a price of 0) count as present.
+    """
     val = node.get(field)
     if val is None:
         return False
+    if isinstance(val, bool):
+        return True
+    if isinstance(val, (int, float)):
+        return True  # numeric present (0 counts)
     if isinstance(val, (str, list, dict)):
         return len(val) > 0
     return True
@@ -209,7 +218,7 @@ def _availability_ok(value) -> bool:
     return token in _AVAILABILITY_TOKENS
 
 
-def validate_product(url: str, timeout: int = 20) -> dict:
+def validate_product(url: str, timeout: int = 60) -> dict:
     """Validate a page's Product structured data for Merchant Center readiness.
 
     Returns:
@@ -234,6 +243,7 @@ def validate_product(url: str, timeout: int = 20) -> dict:
         return {
             "ok": True,
             "url": extracted["url"],
+            "engine": extracted.get("engine"),
             "found": False,
             "product": None,
             "missing_required": list(REQUIRED_FIELDS),
@@ -288,6 +298,7 @@ def validate_product(url: str, timeout: int = 20) -> dict:
     return {
         "ok": True,
         "url": extracted["url"],
+        "engine": extracted.get("engine"),
         "found": True,
         "product": product,
         "missing_required": missing_required,
@@ -297,6 +308,6 @@ def validate_product(url: str, timeout: int = 20) -> dict:
     }
 
 
-def validate_many(urls, timeout: int = 20) -> list:
+def validate_many(urls, timeout: int = 60) -> list:
     """Run validate_product over a list of URLs and return the list of results."""
     return [validate_product(url, timeout=timeout) for url in urls]

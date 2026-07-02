@@ -15,6 +15,7 @@ Public API (import path inside BDOS):
 """
 
 from .api import ask, clear_cache, deep_crawl, extract, scrape, status
+from .fetch import fetch_html
 
-__all__ = ["scrape", "deep_crawl", "extract", "ask", "status", "clear_cache"]
-__version__ = "0.1.0"
+__all__ = ["scrape", "deep_crawl", "extract", "ask", "status", "clear_cache", "fetch_html"]
+__version__ = "0.2.0"

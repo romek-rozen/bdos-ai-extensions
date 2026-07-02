@@ -28,17 +28,54 @@ _USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 )
-DEFAULT_TIMEOUT = 20
+DEFAULT_TIMEOUT = 60
 # Unified diff is truncated to keep results readable in a chat context.
 DIFF_LIMIT = 8_000
 
 
-def _fetch(url: str, timeout: int) -> str:
-    """Fetch a URL and return decoded HTML (utf-8, errors ignored)."""
+def _get_html(url: str, timeout: int) -> dict:
+    """Fetch a URL's HTML, human-like when possible.
+
+    Prefers the shared crawl4ai fetch layer (rendered browser, avoids anti-bot
+    blocking). Falls back to a charset-aware urllib fetch when crawl4ai is not
+    available. Returns a dict: {"ok", "engine", "url", "final_url", "status",
+    "html", "error"} (matching my.extensions.crawl4ai.fetch_html).
+    """
+    try:
+        from my.extensions.crawl4ai import fetch_html as _cf
+    except Exception:
+        _cf = None
+    if _cf:
+        return _cf(url, timeout=timeout)
+
+    # Charset-aware urllib fallback (honors get_content_charset()).
     request = urllib.request.Request(url, headers={"User-Agent": _USER_AGENT})
-    with urllib.request.urlopen(request, timeout=timeout) as response:
-        raw = response.read()
-    return raw.decode("utf-8", errors="ignore")
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            status = response.status
+            final_url = response.geturl()
+            charset = response.headers.get_content_charset() or "utf-8"
+            raw = response.read()
+        return {
+            "ok": True,
+            "engine": "urllib",
+            "url": url,
+            "final_url": final_url,
+            "status": status,
+            "html": raw.decode(charset, errors="replace"),
+        }
+    except urllib.error.HTTPError as exc:
+        charset = (exc.headers.get_content_charset() if exc.headers else None) or "utf-8"
+        body = exc.read() if hasattr(exc, "read") else b""
+        return {
+            "ok": exc.code == 200,
+            "engine": "urllib",
+            "url": url,
+            "final_url": url,
+            "status": exc.code,
+            "html": body.decode(charset, errors="replace"),
+            "error": None if exc.code == 200 else f"HTTP {exc.code}",
+        }
 
 
 def _now_iso() -> str:
@@ -71,10 +108,14 @@ def snapshot(url: str, timeout: int = DEFAULT_TIMEOUT) -> dict:
     prev_hash = _load(previous[-1]).get("hash") if previous else None
 
     try:
-        html = _fetch(url, timeout)
+        fetched = _get_html(url, timeout)
     except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, ValueError, OSError) as exc:
         return {"ok": False, "error": f"fetch failed: {exc}"}
 
+    if not fetched.get("ok"):
+        return {"ok": False, "error": f"fetch failed: {fetched.get('error') or 'unknown error'}"}
+
+    html = fetched.get("html") or ""
     text = resolve.extract_text(html)
     text_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
 

@@ -1,7 +1,8 @@
 """
 api.py — high-level landing-page audit API for BDOS.
 
-`audit(url)` fetches a page (stdlib urllib) and returns a dict of Google Ads
+`audit(url)` fetches a page (via the shared `crawl4ai.fetch_html` when available,
+charset-aware urllib fallback otherwise) and returns a dict of Google Ads
 landing-quality signals plus a list of human-readable `flags`. `audit_many(urls)`
 runs `audit` over a list and returns a list of dicts.
 
@@ -62,44 +63,92 @@ _CTA_PATTERNS = [
 ]
 
 
-def _fetch(url: str, timeout: int) -> dict:
-    """Fetch a URL with urllib. Returns a dict with body/status or an error."""
+# Cap on how much HTML we keep, to bound memory/parse time on huge pages.
+MAX_HTML_BYTES = 5 * 1024 * 1024  # 5 MB
+
+
+def _get_html(url: str, timeout: int) -> dict:
+    """Fetch a page's HTML, preferring the shared human-like fetch layer.
+
+    Routes through ``my.extensions.crawl4ai.fetch_html`` when available (rendered
+    via a real browser, charset-aware, avoids most anti-bot walls). Falls back to
+    a charset-aware urllib fetch so the extension still works standalone.
+
+    Returns a dict shaped like ``fetch_html``: ``ok``, ``engine``, ``url``,
+    ``final_url``, ``status``, ``html`` and (on failure) ``error``.
+    """
+    try:
+        from my.extensions.crawl4ai import fetch_html as _cf
+    except Exception:  # noqa: BLE001 — standalone / crawl4ai not installed
+        _cf = None
+
+    if _cf:
+        return _cf(url, timeout=timeout)
+
+    # Charset-aware urllib fallback (standalone use; honors get_content_charset()).
     request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-    started = time.perf_counter()
     try:
         # urllib follows redirects by default via HTTPRedirectHandler.
         with urllib.request.urlopen(request, timeout=timeout) as response:
             raw = response.read()
             final_url = response.geturl()
             status = getattr(response, "status", None) or response.getcode()
+            charset = response.headers.get_content_charset() or "utf-8"
     except urllib.error.HTTPError as exc:
         # HTTP error responses still carry a body worth auditing.
         try:
             raw = exc.read()
         except Exception:
             raw = b""
-        fetch_ms = int((time.perf_counter() - started) * 1000)
+        charset = (exc.headers.get_content_charset() if exc.headers else None) or "utf-8"
         return {
             "ok": True,
-            "html": raw.decode("utf-8", errors="ignore"),
+            "engine": "urllib",
+            "url": url,
             "final_url": exc.url if getattr(exc, "url", None) else url,
-            "http_status": exc.code,
-            "bytes": len(raw),
-            "fetch_ms": fetch_ms,
+            "status": exc.code,
+            "html": raw.decode(charset, errors="replace"),
         }
     except (urllib.error.URLError, ValueError, TimeoutError) as exc:
-        return {"ok": False, "error": f"fetch failed: {exc}"}
+        return {"ok": False, "engine": "urllib", "url": url, "error": f"fetch failed: {exc}"}
     except Exception as exc:  # noqa: BLE001 — never let a fetch crash the caller
-        return {"ok": False, "error": f"fetch failed: {exc}"}
+        return {"ok": False, "engine": "urllib", "url": url, "error": f"fetch failed: {exc}"}
 
-    fetch_ms = int((time.perf_counter() - started) * 1000)
     return {
         "ok": True,
-        "html": raw.decode("utf-8", errors="ignore"),
+        "engine": "urllib",
+        "url": url,
         "final_url": final_url,
-        "http_status": status,
-        "bytes": len(raw),
+        "status": status,
+        "html": raw.decode(charset, errors="replace"),
+    }
+
+
+def _fetch(url: str, timeout: int) -> dict:
+    """Fetch a URL and normalize the result for `audit()`.
+
+    Delegates to `_get_html` (shared human-like fetch, urllib fallback) and adds
+    timing/size metadata. Returns body/status on success or an error dict.
+    """
+    started = time.perf_counter()
+    result = _get_html(url, timeout)
+    fetch_ms = int((time.perf_counter() - started) * 1000)
+
+    if not result.get("ok"):
+        return {"ok": False, "error": result.get("error") or "fetch failed"}
+
+    html = result.get("html") or ""
+    if len(html) > MAX_HTML_BYTES:
+        html = html[:MAX_HTML_BYTES]
+
+    return {
+        "ok": True,
+        "html": html,
+        "final_url": result.get("final_url") or url,
+        "http_status": result.get("status"),
+        "bytes": len(html.encode("utf-8", errors="ignore")),
         "fetch_ms": fetch_ms,
+        "engine": result.get("engine", "urllib"),
     }
 
 
@@ -186,16 +235,16 @@ def _build_flags(signals: dict) -> list[str]:
     return flags
 
 
-def audit(url: str, timeout: int = 20) -> dict:
+def audit(url: str, timeout: int = 60) -> dict:
     """Audit a single landing page for Google Ads quality/relevance signals.
 
     Args:
         url: page address (http/https).
-        timeout: fetch time limit in seconds (default 20).
+        timeout: fetch time limit in seconds (default 60).
 
     Returns:
         A dict with an `ok` key. On success it contains: final_url, http_status,
-        https, fetch_ms, bytes, title, meta_description, canonical, lang,
+        engine, https, fetch_ms, bytes, title, meta_description, canonical, lang,
         headings, word_count, has_viewport, structured_data, images_total,
         images_missing_alt, cta and flags. On failure: {"ok": False, "error": ...}.
     """
@@ -223,6 +272,7 @@ def audit(url: str, timeout: int = 20) -> dict:
         "url": url,
         "final_url": final_url,
         "http_status": fetched["http_status"],
+        "engine": fetched.get("engine", "urllib"),
         "https": final_url.lower().startswith("https://"),
         "fetch_ms": fetched["fetch_ms"],
         "bytes": fetched["bytes"],
@@ -251,7 +301,7 @@ def audit(url: str, timeout: int = 20) -> dict:
     return signals
 
 
-def audit_many(urls: list[str], timeout: int = 20) -> list[dict]:
+def audit_many(urls: list[str], timeout: int = 60) -> list[dict]:
     """Audit several landing pages. Returns a list of `audit()` result dicts.
 
     Failing URLs are kept in the list as {"ok": False, "url": ..., "error": ...}
