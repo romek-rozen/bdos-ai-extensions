@@ -8,6 +8,17 @@ __pycache__/
 *.pyc
 .DS_Store
 
+# Secrets — never commit real credentials (templates *.example are allowed)
+.env
+.env.*
+*.env
+.secret
+.secrets
+*.secret
+*.secrets
+!.env.example
+!*.env.example
+
 # page-monitor snapshots (local state)
 page_monitor/snapshots/
 
