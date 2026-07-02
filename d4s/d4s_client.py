@@ -47,6 +47,9 @@ class Client:
         now=None,
         max_attempts=3,
         timeout=30.0,
+        cache=True,
+        cache_ttl=604800.0,
+        cache_db=None,
     ):
         env = os.environ if env is None else env
         # Process env wins over a .env file; the file only fills in missing values.
@@ -61,12 +64,32 @@ class Client:
         self._max_attempts = max(1, int(max_attempts))
         self._http_timeout = timeout
         self._last_request = None
+        # Response cache — avoids re-paying DataForSEO for an identical query.
+        self._cache = bool(cache)
+        self._cache_ttl = cache_ttl
+        self._cache_db = cache_db
 
     # -- live -------------------------------------------------------------
 
-    def call(self, path, payload=None, method="POST"):
-        """Hit any live DataForSEO endpoint and return the parsed envelope."""
-        return self._request(method, path, payload)
+    def call(self, path, payload=None, method="POST", no_cache=False):
+        """Hit any live DataForSEO endpoint and return the parsed envelope.
+
+        Successful responses are cached (keyed by path+payload) and reused within
+        ``cache_ttl`` seconds, so repeating a query does not cost credits. Pass
+        ``no_cache=True`` to force a fresh call and refresh the cache.
+        """
+        use_cache = self._cache and not no_cache
+        if use_cache:
+            from . import cache as _cache
+            key = _cache.make_key(path, payload)
+            hit = _cache.get(key, self._cache_ttl, db=self._cache_db)
+            if hit is not None:
+                return {**hit, "cached": True}
+        r = self._request(method, path, payload)
+        if use_cache and r.get("ok"):
+            from . import cache as _cache
+            _cache.put(_cache.make_key(path, payload), r, path=path, db=self._cache_db)
+        return r
 
     # -- task mode --------------------------------------------------------
 

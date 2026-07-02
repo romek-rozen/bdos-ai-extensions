@@ -25,7 +25,7 @@ Public API (import path inside BDOS):
         print(row["keyword"], row["search_volume"], row["cpc"])
 """
 
-from . import d4s_ads_intel, d4s_kw_ads, d4s_labs, d4s_merchant, d4s_meta, d4s_serp
+from . import cache, d4s_ads_intel, d4s_kw_ads, d4s_labs, d4s_merchant, d4s_meta, d4s_serp
 from .d4s_ads_intel import ads_advertisers, ads_search
 from .d4s_client import Client, creds_status
 from .d4s_kw_ads import (

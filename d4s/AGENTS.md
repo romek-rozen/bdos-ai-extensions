@@ -76,8 +76,13 @@ from env creds) and returns an `ok`-keyed dict. `location`/`language` accept a *
 - **Geo typing matters.** In `location`/`language`, a **string** → `location_name`/
   `language_name`; an **int** → `location_code`/`language_code`; `None` is skipped. Use
   `locations()` / `languages()` to resolve codes.
-- **Costs real DataForSEO credits.** `call()`/wrappers return `cost` (USD). The client retries
-  on 429/5xx with exponential backoff.
+- **Costs real DataForSEO credits — but responses are cached.** Successful `call()` responses
+  (and therefore all wrappers built on it) are cached in a local SQLite store
+  (`d4s/cache/`, gitignored) keyed by path+payload, with a **7-day TTL**. Repeating a query is
+  free and instant (the result carries `"cached": True`). Force a fresh call with
+  `call(..., no_cache=True)`, or tune per client: `Client(cache=False)` /
+  `Client(cache_ttl=<seconds>)`. Inspect/clear via `d4s.cache.stats()` / `d4s.cache.clear()`.
+  The client retries on 429/5xx with exponential backoff; `cost` (USD) is returned on live calls.
 
 ## Contract reminders
 

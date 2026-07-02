@@ -35,3 +35,6 @@ keyword_cluster/backgrounds/**/*.npy
 
 # embedding cache (local, per-machine)
 keyword_cluster/cache/
+
+# d4s response cache (local, per-machine)
+d4s/cache/

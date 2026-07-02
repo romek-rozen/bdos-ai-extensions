@@ -45,6 +45,14 @@ print(s["message"])   # human-readable next steps (with the signup link) if not 
 Missing credentials return `{"ok": False, "error": "missing DataForSEO credentials ..."}` —
 the client never raises for expected conditions.
 
+## Caching (don't pay twice)
+
+Successful responses are cached locally in SQLite (`d4s/cache/`, gitignored) keyed by
+path+payload, with a **7-day TTL** — repeating a query is free and instant (the result carries
+`"cached": True`). Force a fresh call with `call(..., no_cache=True)`, or set `Client(cache=False)`
+/ `Client(cache_ttl=<seconds>)`. Inspect or clear with `d4s.cache.stats()` / `d4s.cache.clear()`.
+Override the DB location with the `D4S_CACHE_DB` env var (tests use a temp file).
+
 ## Usage
 
 ```python
