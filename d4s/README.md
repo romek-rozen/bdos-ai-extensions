@@ -25,6 +25,10 @@ export DATAFORSEO_USERNAME="you@example.com"   # alias: DATAFORSEO_LOGIN
 export DATAFORSEO_PASSWORD="your-api-password"
 ```
 
+Alternatively, copy [`.env.example`](.env.example) to `.env` and fill it in — the client also
+reads a `.env` file next to the package or in the current directory (process environment wins
+over the file). `.env` and `*.secret` are gitignored, so real credentials never get committed.
+
 Missing credentials return `{"ok": False, "error": "missing DataForSEO credentials ..."}` —
 the client never raises for expected conditions.
 

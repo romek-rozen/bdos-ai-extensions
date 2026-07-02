@@ -21,6 +21,10 @@ server, so an existing setup just works):
 - `DATAFORSEO_USERNAME` (alias: `DATAFORSEO_LOGIN`)
 - `DATAFORSEO_PASSWORD`
 
+The client also reads a `.env` file (next to the package or in the working
+directory) — copy `d4s/.env.example` to `d4s/.env` and fill it in; process env
+wins over the file. `.env`/`*.secret` are gitignored.
+
 No account yet? Sign up at **https://skq.pl/data4seo** (affiliate link). If a call
 returns `{"ok": False, "error": "missing DataForSEO credentials"}`, the env vars
 aren't set for this session.

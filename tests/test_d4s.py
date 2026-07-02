@@ -87,6 +87,37 @@ class TestAuthAndEnv(unittest.TestCase):
         self.assertTrue(r["ok"])
 
 
+class TestDotenv(unittest.TestCase):
+    def _write_env(self, text):
+        import tempfile
+        d = tempfile.mkdtemp()
+        p = pathlib.Path(d) / ".env"
+        p.write_text(text, encoding="utf-8")
+        return str(p)
+
+    def test_reads_credentials_from_env_file(self):
+        path = self._write_env(
+            "# DataForSEO\nDATAFORSEO_USERNAME=filuser\nDATAFORSEO_PASSWORD='filpass'\n")
+        c = Client(env={}, env_file=path,
+                   transport=FakeTransport([(200, _body(_envelope([{"x": 1}])))]),
+                   sleeper=lambda _s: None)
+        r = c.call("/v3/x/live", [{}])
+        self.assertTrue(r["ok"])
+
+    def test_process_env_overrides_env_file(self):
+        path = self._write_env("DATAFORSEO_USERNAME=fileuser\nDATAFORSEO_PASSWORD=filepass\n")
+        c = Client(env={"DATAFORSEO_USERNAME": "envuser", "DATAFORSEO_PASSWORD": "envpass"},
+                   env_file=path, transport=FakeTransport([]), sleeper=lambda _s: None)
+        self.assertEqual(c._login, "envuser")
+        self.assertEqual(c._password, "envpass")
+
+    def test_missing_env_file_is_harmless(self):
+        c = Client(env={"DATAFORSEO_USERNAME": "u", "DATAFORSEO_PASSWORD": "p"},
+                   env_file="/no/such/.env", transport=FakeTransport([]),
+                   sleeper=lambda _s: None)
+        self.assertEqual(c._login, "u")
+
+
 class TestCall(unittest.TestCase):
     def test_success_envelope_flattening(self):
         c = _client([(200, _body(_envelope([{"keyword": "buty", "search_volume": 1000}])))])

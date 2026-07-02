@@ -20,11 +20,17 @@ Two call modes:
 import base64
 import json
 import os
+import pathlib
 import time
 import urllib.error
 import urllib.request
 
 DEFAULT_BASE_URL = "https://api.dataforseo.com"
+# Default locations searched for a .env file (package dir, then repo/cwd).
+_DEFAULT_ENV_FILES = (
+    str(pathlib.Path(__file__).resolve().parent / ".env"),
+    str(pathlib.Path.cwd() / ".env"),
+)
 _OK_STATUS = 20000  # DataForSEO "Ok." status code (both envelope- and task-level)
 
 
@@ -36,12 +42,16 @@ class Client:
         base_url=None,
         transport=None,
         env=None,
+        env_file=None,
         sleeper=None,
         now=None,
         max_attempts=3,
         timeout=30.0,
     ):
         env = os.environ if env is None else env
+        # Process env wins over a .env file; the file only fills in missing values.
+        file_vars = _read_env_file(env_file if env_file is not None else _DEFAULT_ENV_FILES)
+        env = {**file_vars, **env}
         self._login = login or env.get("DATAFORSEO_USERNAME") or env.get("DATAFORSEO_LOGIN")
         self._password = password or env.get("DATAFORSEO_PASSWORD")
         self._base_url = (base_url or env.get("DATAFORSEO_BASE_URL") or DEFAULT_BASE_URL).rstrip("/")
@@ -142,6 +152,36 @@ class Client:
                     continue
             return status, raw
         return last
+
+
+def _read_env_file(paths):
+    """Parse the first existing .env file into a dict (KEY=VALUE lines).
+
+    ``paths`` may be a single path or an iterable of candidates; the first that
+    exists is used. Blank lines and ``#`` comments are ignored; surrounding
+    quotes and an optional ``export`` prefix are stripped. Never raises.
+    """
+    if isinstance(paths, str):
+        paths = (paths,)
+    for path in paths:
+        try:
+            text = pathlib.Path(path).read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            continue
+        out = {}
+        for line in text.splitlines():
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            if line.startswith("export "):
+                line = line[len("export "):]
+            key, _, value = line.partition("=")
+            key = key.strip()
+            value = value.strip().strip('"').strip("'")
+            if key:
+                out[key] = value
+        return out
+    return {}
 
 
 def _task_ready(got):

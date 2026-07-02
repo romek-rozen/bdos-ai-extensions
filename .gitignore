@@ -10,3 +10,14 @@ __pycache__/
 
 # page-monitor snapshots (local state)
 page_monitor/snapshots/
+
+# Secrets — never commit real credentials (templates *.example are allowed)
+.env
+.env.*
+*.env
+.secret
+.secrets
+*.secret
+*.secrets
+!.env.example
+!*.env.example
