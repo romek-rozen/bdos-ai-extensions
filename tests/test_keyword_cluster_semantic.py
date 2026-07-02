@@ -69,5 +69,26 @@ class TestEmbedMissingKey(unittest.TestCase):
                 os.environ["OPENAI_API_KEY"] = prev
 
 
+try:
+    import numpy as np
+    HAVE_NUMPY = True
+except ImportError:
+    HAVE_NUMPY = False
+
+
+@unittest.skipUnless(HAVE_NUMPY, "numpy required (heavy venv)")
+class TestWhiten(unittest.TestCase):
+    def test_whiten_decorrelates(self):
+        from keyword_cluster.whiten import whiten_batch
+        rng = np.random.default_rng(0)
+        base = rng.normal(size=(200, 8))
+        X = base @ rng.normal(size=(8, 32))  # correlated, anisotropic
+        W = whiten_batch(X, reduce_dim=8)
+        # rows are finite, L2-normalized
+        norms = np.linalg.norm(W, axis=1)
+        self.assertTrue(np.allclose(norms, 1.0, atol=1e-6))
+        self.assertTrue(np.isfinite(W).all())
+
+
 if __name__ == "__main__":
     unittest.main()
