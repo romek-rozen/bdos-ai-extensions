@@ -22,12 +22,24 @@ server, so an existing setup just works):
 - `DATAFORSEO_PASSWORD`
 
 The client also reads a `.env` file (next to the package or in the working
-directory) — copy `d4s/.env.example` to `d4s/.env` and fill it in; process env
-wins over the file. `.env`/`*.secret` are gitignored.
+directory); process env wins over the file. `install_into_bdos.py` creates
+`d4s/.env` from the template automatically — the user just fills it in. Standalone:
+`cp d4s/.env.example d4s/.env`. `.env`/`*.secret` are gitignored.
 
-No account yet? Sign up at **https://skq.pl/data4seo** (affiliate link). If a call
-returns `{"ok": False, "error": "missing DataForSEO credentials"}`, the env vars
-aren't set for this session.
+**Before running live calls, check readiness and guide the user if needed:**
+
+```python
+from my.extensions.d4s import creds_status
+s = creds_status()
+if not s["ready"]:
+    print(s["message"])   # exact file to edit, which vars, and the signup link
+```
+
+`creds_status()` → `{"ok", "ready", "has_login", "has_password", "env_path",
+"message"}`. If `ready` is False, show the user `message` (it names `env_path`, the
+missing vars, and **https://skq.pl/data4seo** — affiliate) instead of guessing. A
+live call with no credentials returns
+`{"ok": False, "error": "missing DataForSEO credentials ..."}`.
 
 ## 1) The common Google Ads calls
 

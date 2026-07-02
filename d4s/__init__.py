@@ -27,7 +27,7 @@ Public API (import path inside BDOS):
 
 from . import d4s_ads_intel, d4s_kw_ads, d4s_labs, d4s_merchant, d4s_meta, d4s_serp
 from .d4s_ads_intel import ads_advertisers, ads_search
-from .d4s_client import Client
+from .d4s_client import Client, creds_status
 from .d4s_kw_ads import (
     ad_traffic_by_keywords,
     google_trends,
@@ -42,6 +42,7 @@ from .d4s_serp import autocomplete, serp, serp_competitors
 
 __all__ = [
     "Client",
+    "creds_status",
     # keywords data / google ads
     "search_volume", "keywords_for_site", "keywords_for_keywords",
     "ad_traffic_by_keywords", "google_trends",

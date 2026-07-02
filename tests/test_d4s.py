@@ -64,7 +64,9 @@ def _client(responses, **kw):
 
 class TestAuthAndEnv(unittest.TestCase):
     def test_missing_credentials_returns_error(self):
-        c = Client(login=None, password=None, transport=FakeTransport([]))
+        # env={} and a nonexistent env_file so no ambient .env / process var leaks in.
+        c = Client(login=None, password=None, env={}, env_file="/no/such/.env",
+                   transport=FakeTransport([]))
         r = c.call("/v3/whatever/live", [{}])
         self.assertFalse(r["ok"])
         self.assertIn("credential", r["error"].lower())
@@ -116,6 +118,20 @@ class TestDotenv(unittest.TestCase):
                    env_file="/no/such/.env", transport=FakeTransport([]),
                    sleeper=lambda _s: None)
         self.assertEqual(c._login, "u")
+
+
+class TestCredsStatus(unittest.TestCase):
+    def test_ready_when_env_file_has_credentials(self):
+        import tempfile
+        from d4s import creds_status
+        d = tempfile.mkdtemp()
+        p = pathlib.Path(d) / ".env"
+        p.write_text("DATAFORSEO_USERNAME=user@x\nDATAFORSEO_PASSWORD=pw\n", encoding="utf-8")
+        r = creds_status(env_file=str(p))
+        self.assertTrue(r["ok"])
+        self.assertTrue(r["ready"])
+        self.assertTrue(r["has_login"] and r["has_password"])
+        self.assertIn("user@x", r["message"])
 
 
 class TestCall(unittest.TestCase):

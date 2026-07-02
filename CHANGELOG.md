@@ -27,8 +27,11 @@ All notable changes to this repo. Dates are ISO (YYYY-MM-DD).
   `search_volume`, `keywords_for_site`, `keywords_for_keywords`, `ad_traffic_by_keywords`,
   `google_trends`, `keyword_ideas`, `keyword_suggestions`, `keyword_difficulty`,
   `search_intent`, `serp`, `serp_competitors`, `autocomplete`, `ads_advertisers`/`ads_search`
-  (Ads Transparency), `products`/`sellers` (Shopping), `locations`/`languages`. Read-only.
+  (Ads Transparency), `products`/`sellers` (Shopping), `locations`/`languages`. Reads a
+  `.env` file too; `creds_status()` reports readiness with plain-language next steps. Read-only.
 - **install_into_bdos.py** — one-command self-install (symlink/copy) into a BDOS `my/` dir.
+  Auto-creates `.env` from `.env.example` for any extension that ships one (d4s,
+  keyword_cluster) and prints a `🔑 API keys` checklist of which vars to fill in.
 - **CI** on macOS + Windows; unit tests for path logic and marginal_ers math.
 - Docs: README, AGENTS.md, GETTING_STARTED, EXTENSIONS reference, CONTRIBUTING.
 

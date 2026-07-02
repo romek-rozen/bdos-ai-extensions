@@ -83,6 +83,35 @@ def discover_extensions() -> list[Path]:
     ]
 
 
+def _env_var_names(example: Path) -> list[str]:
+    """Variable names declared in a .env.example (KEY=... lines)."""
+    names = []
+    for line in example.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line and not line.startswith("#") and "=" in line:
+            names.append(line.split("=", 1)[0].strip())
+    return names
+
+
+def ensure_env(ext: Path) -> dict | None:
+    """For an extension shipping a `.env.example`, make sure a `.env` exists next to
+    it (copied from the template, never overwritten) and report the keys to fill.
+
+    Returns {"name", "env_path", "vars", "created"} or None if the extension needs
+    no credentials. Editing this `.env` in the repo is what BDOS reads (it's symlinked).
+    """
+    example = ext / ".env.example"
+    if not example.exists():
+        return None
+    env = ext / ".env"
+    created = False
+    if not env.exists():
+        shutil.copyfile(example, env)
+        created = True
+    return {"name": ext.name, "env_path": str(env),
+            "vars": _env_var_names(example), "created": created}
+
+
 def discover_skills() -> list[Path]:
     skills_root = REPO / "skills"
     if not skills_root.is_dir():
@@ -133,6 +162,18 @@ def main() -> int:
                 print(f"  {ext.name}: {r}")
             except Exception as e:  # noqa: BLE001
                 print(f"  {ext.name}: no installer or failed ({e})")
+
+    # API-key onboarding: create .env from .env.example for every extension that
+    # needs credentials, and print a clear checklist of what to fill in.
+    creds = [c for c in (ensure_env(ext) for ext in extensions) if c]
+    if creds:
+        print("\n🔑 API keys — some extensions need credentials to work:")
+        for c in creds:
+            tag = " (created for you)" if c["created"] else ""
+            print(f"  • {c['name']}: edit {c['env_path']}{tag}")
+            print(f"      set: {', '.join(c['vars'])}")
+            print(f"      details: {c['name']}/README.md")
+        print("  (.env files are gitignored — your keys stay on this machine.)")
 
     print("\nNext step — register the skills/commands with BDOS:")
     print("  bdos update --regenerate")

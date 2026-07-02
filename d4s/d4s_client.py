@@ -184,6 +184,41 @@ def _read_env_file(paths):
     return {}
 
 
+def creds_status(env_file=None):
+    """Report whether DataForSEO credentials are configured, with next steps.
+
+    Lets a BDOS agent check readiness before calling and guide a non-technical
+    user. Returns {"ok", "ready", "has_login", "has_password", "env_path",
+    "message"}. Reads the same sources as ``Client`` (process env + .env file).
+    """
+    c = Client(env_file=env_file)
+    ready = bool(c._login and c._password)
+    env_path = str(pathlib.Path(__file__).resolve().parent / ".env")
+    if ready:
+        message = f"DataForSEO ready (user: {c._login})."
+    else:
+        missing = []
+        if not c._login:
+            missing.append("DATAFORSEO_USERNAME")
+        if not c._password:
+            missing.append("DATAFORSEO_PASSWORD")
+        message = (
+            f"DataForSEO not configured (missing: {', '.join(missing)}).\n"
+            f"  Edit {env_path} and set:\n"
+            "    DATAFORSEO_USERNAME=you@example.com\n"
+            "    DATAFORSEO_PASSWORD=your-api-password\n"
+            "  Get an account: https://skq.pl/data4seo   (.env is gitignored)"
+        )
+    return {
+        "ok": True,
+        "ready": ready,
+        "has_login": bool(c._login),
+        "has_password": bool(c._password),
+        "env_path": env_path,
+        "message": message,
+    }
+
+
 def _task_ready(got):
     tasks = got.get("tasks") or []
     if not tasks:

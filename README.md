@@ -121,7 +121,9 @@ independent of the `dfs-mcp` MCP server. Read/analyze only.
 
 - `search_volume`, `keyword_ideas`, `ad_traffic_by_keywords`, `serp`, `ads_search`, … or the
   generic `Client().call(path, payload)` for any endpoint
-- Credentials from env: `DATAFORSEO_USERNAME`/`DATAFORSEO_LOGIN` + `DATAFORSEO_PASSWORD`
+- Credentials from env `DATAFORSEO_USERNAME`/`DATAFORSEO_LOGIN` + `DATAFORSEO_PASSWORD` or a
+  `d4s/.env` (the installer auto-creates it from `.env.example`); `creds_status()` reports
+  whether keys are set and what to do next
 - Get an account: **https://skq.pl/data4seo** *(affiliate link)*
 - Skill: `ext-d4s`
 

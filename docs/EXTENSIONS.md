@@ -220,12 +220,18 @@ Read-only — hand the suggested ad-group structure to the mutation workflow.
 ## d4s
 
 Thin DataForSEO REST client. Pure standard library, independent of the `dfs-mcp` MCP server.
-Credentials from env: `DATAFORSEO_USERNAME` (alias `DATAFORSEO_LOGIN`) + `DATAFORSEO_PASSWORD`.
-Get an account: <https://skq.pl/data4seo> (affiliate link). Read/analyze only.
+Credentials from env `DATAFORSEO_USERNAME` (alias `DATAFORSEO_LOGIN`) + `DATAFORSEO_PASSWORD`,
+or a `d4s/.env` file (the installer auto-creates it from `.env.example`). Get an account:
+<https://skq.pl/data4seo> (affiliate link). Read/analyze only.
+
+`creds_status(env_file=None)` → `{"ok", "ready", "has_login", "has_password", "env_path",
+"message"}` — check whether credentials are configured (reads the same sources as `Client`)
+and, when not ready, get a plain-language `message` naming the file to edit, the missing vars,
+and the signup link. Use it before live calls to guide a non-technical user.
 
 ```python
 from my.extensions.d4s import (
-    Client,
+    Client, creds_status,
     # keywords data / google ads
     search_volume, keywords_for_site, keywords_for_keywords, ad_traffic_by_keywords, google_trends,
     # labs

@@ -25,9 +25,22 @@ export DATAFORSEO_USERNAME="you@example.com"   # alias: DATAFORSEO_LOGIN
 export DATAFORSEO_PASSWORD="your-api-password"
 ```
 
-Alternatively, copy [`.env.example`](.env.example) to `.env` and fill it in — the client also
-reads a `.env` file next to the package or in the current directory (process environment wins
-over the file). `.env` and `*.secret` are gitignored, so real credentials never get committed.
+Alternatively, use a `.env` file — the client also reads a `.env` next to the package or in the
+current directory (process environment wins over the file). `.env` and `*.secret` are
+gitignored, so real credentials never get committed.
+
+`install_into_bdos.py` **creates `d4s/.env` from `.env.example` automatically** and prints a
+`🔑 API keys` checklist telling you which variables to fill in. So the usual flow is: run the
+installer, then edit `d4s/.env`. (Standalone, just `cp .env.example .env` and fill it in.)
+
+Check readiness at any time — handy for a BDOS agent guiding a non-technical user:
+
+```python
+from my.extensions.d4s import creds_status
+s = creds_status()
+print(s["ready"])     # True/False
+print(s["message"])   # human-readable next steps (with the signup link) if not ready
+```
 
 Missing credentials return `{"ok": False, "error": "missing DataForSEO credentials ..."}` —
 the client never raises for expected conditions.

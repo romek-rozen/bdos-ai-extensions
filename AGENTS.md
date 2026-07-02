@@ -63,8 +63,10 @@ redirect chains is its whole point.
   clicks}`) → `verdict` (scale up / at optimum / cut back) and `target_roas` (= 1 + 1/E).
   Pure math, no network. Feed the recommended tROAS to the mutation workflow.
 - **d4s** — DataForSEO REST client, independent of the `dfs-mcp` MCP server. Env creds
-  `DATAFORSEO_USERNAME`/`DATAFORSEO_LOGIN` + `DATAFORSEO_PASSWORD` (get an account:
-  https://skq.pl/data4seo — affiliate). Live wrappers: `search_volume`, `keywords_for_site`,
+  `DATAFORSEO_USERNAME`/`DATAFORSEO_LOGIN` + `DATAFORSEO_PASSWORD`, or a `d4s/.env`
+  (the installer auto-creates it from `.env.example`; get an account: https://skq.pl/data4seo —
+  affiliate). Call `creds_status()` first to check readiness and show the user the exact next
+  steps if not configured. Live wrappers: `search_volume`, `keywords_for_site`,
   `keywords_for_keywords`, `ad_traffic_by_keywords`, `google_trends`, `keyword_ideas`,
   `keyword_suggestions`, `keyword_difficulty`, `search_intent`, `serp`, `serp_competitors`,
   `autocomplete`, `locations`, `languages`. Task-mode (submit→poll→get, has `timeout`/
