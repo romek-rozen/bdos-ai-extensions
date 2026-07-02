@@ -22,7 +22,7 @@ def union_find_cluster(texts, sim_fn, threshold: float):
     return list(groups.values())
 
 
-def umap_reduce(vectors, n_components=30, n_neighbors=5, random_state=42):
+def umap_reduce(vectors, n_components=30, n_neighbors=3, random_state=42):
     """Reduce embeddings to a low-dim manifold before density clustering.
 
     HDBSCAN on full-dim embeddings finds one blurry mega-cluster; reducing with
@@ -30,7 +30,7 @@ def umap_reduce(vectors, n_components=30, n_neighbors=5, random_state=42):
     clusters. Skipped for small n (UMAP needs enough neighbours) — the caller
     clusters the full vectors there. Imports umap lazily.
 
-    Defaults `n_components=30, n_neighbors=5, min_dist=0.0` — empirically beat the
+    Defaults `n_components=30, n_neighbors=3, min_dist=0.0` — empirically beat the
     BERTopic canon (dim=10, n_neighbors=15) by ~15pp (fewer noise, tighter,
     ad-group-sized clusters); a smaller n_neighbors favours local structure.
     """
