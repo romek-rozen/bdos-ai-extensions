@@ -45,5 +45,28 @@ class TestUnionFind(unittest.TestCase):
         self.assertEqual(flat, [0, 1, 2])
 
 
+from keyword_cluster.label import build_cluster  # noqa: E402
+
+class TestBuildCluster(unittest.TestCase):
+    def test_aggregates_metrics_and_labels(self):
+        members = [
+            {"text": "buty trekkingowe", "avg_monthly_searches": 1000, "competition": "HIGH", "cpc_low": 0.4, "cpc_high": 1.2},
+            {"text": "buty trekkingowe damskie", "avg_monthly_searches": 500, "competition": "MEDIUM", "cpc_low": 0.5, "cpc_high": 1.0},
+        ]
+        c = build_cluster(0, members)
+        self.assertEqual(c["total_volume"], 1500)
+        self.assertEqual(c["size"], 2)
+        self.assertEqual(c["representative_keyword"], "buty trekkingowe")  # highest volume
+        self.assertIn("buty", c["label"])            # dominant token
+        self.assertIn("trekkingowe", c["label"])
+        self.assertEqual(c["dominant_competition"], "HIGH")
+        self.assertAlmostEqual(c["avg_cpc"], (0.8 + 0.75) / 2)  # mean of per-kw (low+high)/2
+    def test_no_metrics_graceful(self):
+        c = build_cluster(1, [{"text": "rower gorski"}, {"text": "rower gorski damski"}])
+        self.assertIsNone(c["total_volume"])
+        self.assertIsNone(c["avg_cpc"])
+        self.assertEqual(c["representative_keyword"], "rower gorski")  # shortest as fallback
+
+
 if __name__ == "__main__":
     unittest.main()
