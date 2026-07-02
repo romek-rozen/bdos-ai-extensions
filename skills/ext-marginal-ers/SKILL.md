@@ -111,6 +111,11 @@ and confirm scope first.
 
 ## Caveats
 
+- **Search / manual-CPC campaigns only.** The model assumes CPC is the bidding lever and
+  traffic rises with price (E > 0). For **PMax / Shopping / Demand Gen**, CPC isn't the lever,
+  so elasticity is unreliable — if `analyze` returns `verdict: "inconclusive"` (negative E,
+  i.e. clicks and CPC moved in opposite directions), do not give a scale verdict; it usually
+  means the change was budget/seasonal, not bid-driven, or the campaign type doesn't fit.
 - Assumes conversion value per conversion and conversion rate stay roughly constant as you
   scale (same audience quality). State this when advising.
 - Elasticity from two noisy periods is an estimate — prefer longer, stable, comparable

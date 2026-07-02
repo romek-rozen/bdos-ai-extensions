@@ -136,6 +136,32 @@ def decide(current_ers: float, e: float, tolerance: float = OPTIMUM_TOLERANCE) -
     if current_ers <= 0:
         return {"ok": False, "error": "current ERS must be > 0"}
 
+    cur_roas0 = 1 / current_ers
+    if e < 0:
+        # The model assumes traffic rises with price (E > 0). Negative elasticity
+        # means clicks and CPC moved in opposite directions between the periods —
+        # so this is not a clean bid-driven change. Common causes: a PMax/Shopping
+        # campaign where CPC isn't the bidding lever, a budget-only or seasonal
+        # change, or noise. The marginal-ERS verdict does not apply.
+        return {
+            "ok": True,
+            "ers": current_ers,
+            "elasticity": e,
+            "marginal_ers": None,
+            "roas": cur_roas0,
+            "roi": cur_roas0 - 1,
+            "target_roas": None,
+            "target_roi": None,
+            "target_ers": None,
+            "profitable_to_scale": None,
+            "verdict": "inconclusive",
+            "reason": (f"elasticity is negative (E={e:.2f}): clicks and CPC moved in "
+                       f"opposite directions, so the price→traffic model doesn't apply. "
+                       f"Likely not a clean bid-driven change (budget/seasonality) or a "
+                       f"PMax/Shopping campaign where CPC isn't the bidding lever. Compare "
+                       f"two Search periods that differ mainly by bid."),
+        }
+
     ersm = marginal_ers(current_ers, e)
     cur_roas = 1 / current_ers
     cur_roi = cur_roas - 1

@@ -53,6 +53,14 @@ class TestDecide(unittest.TestCase):
     def test_zero_elasticity(self):
         self.assertFalse(decide(0.2, 0.0)["ok"])
 
+    def test_negative_elasticity_is_inconclusive(self):
+        d = decide(0.1, -0.9)  # clicks and CPC moved opposite ways
+        self.assertTrue(d["ok"])
+        self.assertEqual(d["verdict"], "inconclusive")
+        self.assertIsNone(d["marginal_ers"])
+        self.assertIsNone(d["target_roas"])
+        self.assertIsNone(d["profitable_to_scale"])
+
 
 class TestAnalyze(unittest.TestCase):
     def test_end_to_end(self):
