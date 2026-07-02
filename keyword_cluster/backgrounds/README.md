@@ -1,9 +1,26 @@
 # Whitening backgrounds
 
-Drop precomputed **ZCA whitening backgrounds** here to auto-improve semantic clustering.
-Batch (self) whitening estimates the covariance from the handful of keywords you cluster,
-which overfits on small sets. A background fitted on a **large keyword corpus** (per model)
-is the proper form — and it's used automatically when present.
+Precomputed **ZCA whitening backgrounds** live here (local, gitignored — not shipped in the
+repo because the matrices are large). When a background matching the resolved `(model, dim)`
+is present, semantic clustering uses it automatically instead of batch whitening.
+
+**Reality check:** with the tuned UMAP→HDBSCAN pipeline (`dim=30, n_neighbors=5`), **batch
+whitening matched or beat these keyword backgrounds** in testing — UMAP re-learns the manifold
+and washes out the input whitening. So a background is an **experimental opt-in**, not required;
+batch is the validated default.
+
+## Download on demand
+
+```python
+from my.extensions.keyword_cluster.whiten import fetch_background
+fetch_background("qwen/qwen3-embedding-8b", 4096)   # pulls mu_A.npy + W_A.npy here
+```
+
+Fetches the keyword-level background from
+[`romek-rozen/polish-whitening-backgrounds`](https://github.com/romek-rozen/polish-whitening-backgrounds)
+into `backgrounds/<model-slug>/dim<N>/`. Idempotent; best-effort. Available (model → dims):
+`qwen/qwen3-embedding-8b` 512–4096 · `qwen3-embedding:4b` 512–2560 ·
+`text-embedding-3-large` 256–3072 · `text-embedding-3-small` 256–1536. (dim 4096 W ≈ 65 MB.)
 
 ## Convention (auto-discovered)
 

@@ -130,7 +130,7 @@ re-learns the manifold, washing out the input whitening), so **batch is the vali
 ## How the semantic tier clusters
 
 embed → (background/batch whitening) → **UMAP-reduce (`dim=30, n_neighbors=5, min_dist=0`) →
-HDBSCAN (`leaf`)** → a cosine fallback for tiny sets. Reducing with UMAP before HDBSCAN is what
+HDBSCAN (`eom`, min_samples=3)** → a cosine fallback for tiny sets. Reducing with UMAP before HDBSCAN is what
 breaks a 200-keyword list into ~20 coherent ad-group clusters instead of one giant blob; the
 `dim=30, n_neighbors=5` config beat the BERTopic canon (dim=10, nn=15) by ~15pp (fewer noise,
 tighter clusters). Tune per set via `umap_dim` (small sets → try 10). Skipped for `n < 25`
