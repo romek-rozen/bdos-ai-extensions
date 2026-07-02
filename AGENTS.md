@@ -40,6 +40,7 @@ redirect chains is its whole point.
 | Compare content vs competitors, find gaps | `content_compare` | `compare(urls, keywords=[...])` |
 | Should I scale a campaign up/down? profit-optimal ROAS? | `marginal_ers` | `analyze(before, after)` |
 | N-gram waste analysis of search terms → negatives | `ngram_pro` | `analyze(search_terms, target_cpa=...)` |
+| Cluster keyword-research output into ad groups | `keyword_cluster` | `cluster(keywords, ...)` |
 
 ## Per-extension notes
 
@@ -64,6 +65,12 @@ redirect chains is its whole point.
   `nscore` (wasted spend) + `negatives[]`. Feed it `engine.execute(entity="search_terms")`
   rows. Confirm negatives and hand them to the mutation workflow; never exclude from here.
   Watch broad 1-grams (`blocked_search_terms`) before excluding.
+- **keyword_cluster** — `cluster(keywords, method="auto", ...)` groups keyword-research output
+  into ad-group-ready `clusters[]` (+ `noise[]`), each with `total_volume/avg_cpc/
+  dominant_competition/representative_keyword/suggested_ad_group/suggested_match_type`. Three
+  tiers: lexical (stdlib) → fuzzy (`rapidfuzz`) → semantic (embeddings + HDBSCAN, needs
+  `install()` + `.env`). `method="auto"` degrades quietly — check `method_used`. Batch ZCA
+  whitening on by default. Read-only; hand the structure to the mutation workflow.
 
 ## Adding a new extension
 
