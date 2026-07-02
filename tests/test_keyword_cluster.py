@@ -68,5 +68,32 @@ class TestBuildCluster(unittest.TestCase):
         self.assertEqual(c["representative_keyword"], "rower gorski")  # shortest as fallback
 
 
+from keyword_cluster import cluster  # noqa: E402
+
+
+class TestClusterApi(unittest.TestCase):
+    def test_accepts_list_of_strings(self):
+        r = cluster(["buty trekkingowe", "trekkingowe buty tanie", "rower gorski"], method="lexical")
+        self.assertTrue(r["ok"])
+        self.assertEqual(r["method_used"], "lexical")
+        # "buty trekkingowe" + "trekkingowe buty tanie" merge (jaccard 2/3 >= 0.5) into one
+        # cluster of size 2; "rower gorski" is a singleton dropped by min_cluster_size=2.
+        self.assertEqual(len(r["clusters"]), 1)
+
+    def test_accepts_dicts_and_sorts_by_volume(self):
+        kws = [
+            {"text": "rower gorski", "avg_monthly_searches": 100},
+            {"text": "buty trekkingowe", "avg_monthly_searches": 900},
+            {"text": "buty trekkingowe tanie", "avg_monthly_searches": 800},
+        ]
+        r = cluster(kws, method="lexical")
+        self.assertTrue(r["ok"])
+        self.assertEqual(r["clusters"][0]["total_volume"], 1700)  # biggest first
+
+    def test_empty_input_errors(self):
+        r = cluster([], method="lexical")
+        self.assertFalse(r["ok"])
+
+
 if __name__ == "__main__":
     unittest.main()
