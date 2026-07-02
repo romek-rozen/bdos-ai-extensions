@@ -39,6 +39,7 @@ redirect chains is its whole point.
 | Watch a page for changes (price/promo/content) | `page_monitor` | `diff(url)` |
 | Compare content vs competitors, find gaps | `content_compare` | `compare(urls, keywords=[...])` |
 | Should I scale a campaign up/down? profit-optimal ROAS? | `marginal_ers` | `analyze(before, after)` |
+| N-gram waste analysis of search terms → negatives | `ngram_pro` | `analyze(search_terms, target_cpa=...)` |
 
 ## Per-extension notes
 
@@ -59,6 +60,10 @@ redirect chains is its whole point.
 - **marginal_ers** — `analyze(before, after)` from two period snapshots (`{cost, revenue,
   clicks}`) → `verdict` (scale up / at optimum / cut back) and `target_roas` (= 1 + 1/E).
   Pure math, no network. Feed the recommended tROAS to the mutation workflow.
+- **ngram_pro** — `analyze(search_terms, target_cpa=…)` → per-fragment table ranked by
+  `nscore` (wasted spend) + `negatives[]`. Feed it `engine.execute(entity="search_terms")`
+  rows. Confirm negatives and hand them to the mutation workflow; never exclude from here.
+  Watch broad 1-grams (`blocked_search_terms`) before excluding.
 
 ## Adding a new extension
 

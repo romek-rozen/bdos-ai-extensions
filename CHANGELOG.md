@@ -17,6 +17,9 @@ All notable changes to this repo. Dates are ISO (YYYY-MM-DD).
   analysis (diacritics-insensitive).
 - **marginal_ers** (`ext-marginal-ers`) — profit-driven bidding math (marginal ERS /
   Zero-ROI model): elasticity, `ERSm`, profit-optimal target ROAS.
+- **ngram_pro** (`ext-ngram-pro`) — n-gram waste analysis of search terms → negative
+  keywords: nScore (wasted spend), Cost Savings, Conv. Loss, Blocked Keywords/Search Terms,
+  vs-average deltas, optional GA4 engagement columns, ranked negative recommendations.
 - **install_into_bdos.py** — one-command self-install (symlink/copy) into a BDOS `my/` dir.
 - **CI** on macOS + Windows; unit tests for path logic and marginal_ers math.
 - Docs: README, AGENTS.md, GETTING_STARTED, EXTENSIONS reference, CONTRIBUTING.

@@ -6,7 +6,7 @@ Every public function returns a dict (or list of dicts) with an `ok` key; on fai
 
 Contents: [crawl4ai](#crawl4ai) · [landing_audit](#landing_audit) · [schema_check](#schema_check)
 · [url_health](#url_health) · [page_monitor](#page_monitor) · [content_compare](#content_compare)
-· [marginal_ers](#marginal_ers)
+· [marginal_ers](#marginal_ers) · [ngram_pro](#ngram_pro)
 
 ---
 
@@ -150,3 +150,30 @@ verdict ("scale up"/"at optimum"/"cut back"), reason, measured`.
 `decide(current_ers, e)` if you already have ERS and elasticity. Helpers: `ers, roas, roi,
 elasticity, elasticity_from_revenue_ers, marginal_ers, target_roas, target_roi, target_ers`.
 Source: <https://adequate.digital/model-zero-roi-optymalizacja-profit-driven/>.
+
+---
+
+## ngram_pro
+
+N-gram waste analysis of Google Ads search terms → negative keywords. Pure Python; you feed
+it rows (the `ext-ngram-pro` skill pulls them from `engine.execute(entity="search_terms")`).
+
+```python
+from my.extensions.ngram_pro import analyze, tokenize, ngrams_of
+analyze(search_terms, target_cpa=25.0, min_cost=5.0, min_blocked_terms=2,
+        keywords=None, ga4_by_term=None, limit=100)
+```
+
+`search_terms` rows accept keys (first match wins): `term`/`search_term`/`text`, `cost`,
+`clicks`, `impressions`/`impr`, `conversions`/`conv`, `conv_value`/`value`.
+
+Returns `ok, totals, averages, ngrams[], negatives[]`. Each n-gram: `ngram, n, cost, clicks,
+impressions, conversions, conv_value, ctr, conv_rate, cpa, roas, blocked_search_terms,
+blocked_keywords, cost_savings, conv_loss, nscore, vs_avg{ctr,conv_rate,cpa,roas}, ga4{…}?`.
+
+**nScore** (wasted spend, the ranking key): with `target_cpa` → `cost − conv·target_cpa`;
+with `target_roas` → `cost − conv_value/target_roas`; else `cost` (0 conv) or `cost − value`.
+`negatives` = positive-waste, zero-conversion fragments, sorted by `cost_savings`. GA4 columns
+are optional/best-effort (GA4 has no per-search-term dimension) — pass `ga4_by_term` only if
+you can map terms to sessions. Hand chosen negatives to the mutation workflow; never exclude
+from here.

@@ -88,6 +88,15 @@ profit-driven model). Maximizing ROAS ≠ maximizing profit. Pure Python, no net
 - `decide(current_ers, e)`, plus `elasticity/ers/roas/roi/marginal_ers/target_roas` helpers
 - Skill: `ext-marginal-ers`
 
+### `ngram_pro/` — n-gram waste analysis → negative keywords
+
+Breaks search terms into 1/2/3-word fragments, ranks them by **wasted spend (nScore)**, and
+recommends negatives — with Cost Savings, Conv. Loss, Blocked Keywords/Search Terms,
+vs-average deltas, and optional GA4 engagement columns. Pure Python; fed with BDOS data.
+
+- `analyze(search_terms, target_cpa=..., min_cost=..., keywords=..., ga4_by_term=...)`
+- Skill: `ext-ngram-pro`
+
 ## Install into BDOS
 
 ### Easiest — inside a BDOS session
