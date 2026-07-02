@@ -40,3 +40,6 @@ keyword_cluster/cache/
 
 # d4s response cache (local, per-machine)
 d4s/cache/
+
+# whitening backgrounds — downloaded on-demand, kept local
+keyword_cluster/backgrounds/**/*.npy

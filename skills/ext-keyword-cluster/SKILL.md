@@ -56,7 +56,7 @@ volume/CPC/competition rollups.
 ## `cluster()` signature & return
 
 `cluster(keywords, *, method="auto", threshold=None, min_cluster_size=2, provider=None,
-model=None, whitening="batch", viz=False, whitening_background=None, seed=42)`
+model=None, whitening="batch", viz=False, whitening_background=None, seed=42, umap_dim=30)`
 
 Returns `{"ok", "method_used", "clusters": [...], "noise": [...], "viz_path"}`. Each cluster:
 `cluster_id, label, members[], size, total_volume, avg_cpc, dominant_competition,
@@ -119,18 +119,22 @@ Resolution order (semantic tier):
 3. else shrinkage-stabilized batch whitening;
 4. `whitening="none"` → raw L2-normalized embeddings.
 
-A proper background is ZCA fitted on a **large keyword corpus per model** (far better than
-batch self-whitening on a tiny set). Grab ready-made ones from
-https://github.com/romek-rozen/polish-whitening-backgrounds and drop the two `.npy` files into
-the folder above — they are picked up automatically, no config. See
-`keyword_cluster/backgrounds/README.md` for the drop-in convention.
+A proper background is ZCA fitted on a **large keyword corpus per model** — grab ready-made
+ones from https://github.com/romek-rozen/polish-whitening-backgrounds and drop the two `.npy`
+files into the folder above; they are picked up automatically. **Reality check:** with the
+UMAP→HDBSCAN pipeline, **batch whitening matched or beat the kw-backgrounds** in testing (UMAP
+re-learns the manifold, washing out the input whitening), so **batch is the validated default**
+— backgrounds are an experimental opt-in, kept out of the repo (download on demand). See
+`keyword_cluster/backgrounds/README.md`.
 
 ## How the semantic tier clusters
 
-embed → (background/batch whitening) → **UMAP-reduce → HDBSCAN (`leaf` selection)** → a cosine
-fallback for tiny sets. Reducing with UMAP before HDBSCAN is what breaks a 200-keyword list
-into ~20 coherent ad-group clusters instead of one giant blob; it's skipped for `n < 25` (small
-sets use the fallback so they still cluster). Embeddings are **cached** in a local SQLite store
+embed → (background/batch whitening) → **UMAP-reduce (`dim=30, n_neighbors=5, min_dist=0`) →
+HDBSCAN (`leaf`)** → a cosine fallback for tiny sets. Reducing with UMAP before HDBSCAN is what
+breaks a 200-keyword list into ~20 coherent ad-group clusters instead of one giant blob; the
+`dim=30, n_neighbors=5` config beat the BERTopic canon (dim=10, nn=15) by ~15pp (fewer noise,
+tighter clusters). Tune per set via `umap_dim` (small sets → try 10). Skipped for `n < 25`
+(small sets use the fallback so they still cluster). Embeddings are **cached** in a local SQLite store
 (`keyword_cluster/cache/`, gitignored) keyed by `(provider, model, dim, text)`, so repeated
 keywords are never re-embedded — first run is slow, re-runs are near-instant.
 

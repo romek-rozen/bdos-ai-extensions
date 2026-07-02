@@ -27,7 +27,7 @@ Use it once you already have keyword ideas — it structures them, it does not f
 
 | Call | Returns |
 |---|---|
-| `cluster(keywords, *, method="auto", threshold=None, min_cluster_size=2, provider=None, model=None, whitening="batch", viz=False, whitening_background=None, seed=42)` | dict: `ok, method_used, clusters[], noise[], viz_path`. Each cluster: `cluster_id, label, members[], size, total_volume, avg_cpc, dominant_competition, representative_keyword, suggested_ad_group, suggested_match_type` |
+| `cluster(keywords, *, method="auto", threshold=None, min_cluster_size=2, provider=None, model=None, whitening="batch", viz=False, whitening_background=None, seed=42, umap_dim=30)` | dict: `ok, method_used, clusters[], noise[], viz_path`. Each cluster: `cluster_id, label, members[], size, total_volume, avg_cpc, dominant_competition, representative_keyword, suggested_ad_group, suggested_match_type` |
 | `install()` (`my.extensions.keyword_cluster.install`) | `{"ok", "python", "already", "env", "next_steps"}` — one-time isolated heavy venv (uv); also auto-creates `.env` and reports key status |
 | `status()` (same module) | `{"ok", "installed": bool, "python", "packages"}` |
 | `env_status()` (same module) | `{"ok", "ready": bool, "providers": {openrouter, openai, ollama}, "env_path", "message"}` — check readiness + a plain-language next step before semantic clustering |
