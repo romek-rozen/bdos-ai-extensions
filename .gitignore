@@ -1,0 +1,9 @@
+# Dedicated crawl4ai venv (heavy, machine-specific)
+crawl4ai/.venv/
+# Crawl outputs & cache
+crawl4ai/outputs/
+crawl4ai/.crawl4ai/
+# Python
+__pycache__/
+*.pyc
+.DS_Store

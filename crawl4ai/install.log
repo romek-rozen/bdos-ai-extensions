@@ -1,0 +1,211 @@
+[crawl4ai] Creating venv (Python 3.12)…
+  $ /Users/romek/.local/bin/uv venv --python 3.12 /Users/romek/Github/bdos-ai-extensions/crawl4ai/.venv
+Using CPython 3.12.12 interpreter at: /opt/anaconda3/bin/python3
+Creating virtual environment at: /Users/romek/Github/bdos-ai-extensions/crawl4ai/.venv
+Activate with: source /Users/romek/Github/bdos-ai-extensions/crawl4ai/.venv/bin/activate
+[crawl4ai] Installing crawl4ai (this may take a minute)…
+  $ /Users/romek/.local/bin/uv pip install --python /Users/romek/Github/bdos-ai-extensions/crawl4ai/.venv/bin/python -U crawl4ai
+Using Python 3.12.12 environment at: /Users/romek/Github/bdos-ai-extensions/crawl4ai/.venv
+Resolved 94 packages in 10.67s
+Downloading openai (1.3MiB)
+Downloading pillow (4.6MiB)
+Downloading scipy (19.5MiB)
+Downloading lxml (7.8MiB)
+Downloading numpy (5.1MiB)
+Downloading shapely (1.6MiB)
+Downloading patchright (40.2MiB)
+Downloading playwright (40.2MiB)
+ Downloading openai
+ Downloading shapely
+ Downloading pillow
+ Downloading numpy
+ Downloading lxml
+ Downloading scipy
+ Downloading patchright
+ Downloading playwright
+Prepared 94 packages in 2m 06s
+Installed 94 packages in 346ms
+ + aiofiles==25.1.0
+ + aiohappyeyeballs==2.7.1
+ + aiohttp==3.14.1
+ + aiosignal==1.4.0
+ + aiosqlite==0.22.1
+ + alphashape==1.3.1
+ + annotated-doc==0.0.4
+ + annotated-types==0.7.0
+ + anyio==4.14.1
+ + attrs==26.1.0
+ + beautifulsoup4==4.15.0
+ + brotli==1.2.0
+ + certifi==2026.6.17
+ + cffi==2.0.0
+ + chardet==7.4.3
+ + charset-normalizer==3.4.7
+ + click==8.4.2
+ + click-log==0.4.0
+ + crawl4ai==0.9.0
+ + cryptography==49.0.0
+ + cssselect==1.4.0
+ + distro==1.9.0
+ + fake-useragent==2.2.0
+ + fastuuid==0.14.0
+ + filelock==3.29.4
+ + frozenlist==1.8.0
+ + fsspec==2026.6.0
+ + greenlet==3.5.3
+ + h11==0.16.0
+ + h2==4.3.0
+ + hf-xet==1.5.1
+ + hpack==4.2.0
+ + httpcore==1.0.9
+ + httpx==0.28.1
+ + huggingface-hub==1.21.0
+ + humanize==4.16.0
+ + hyperframe==6.1.0
+ + idna==3.18
+ + importlib-metadata==9.0.0
+ + jinja2==3.1.6
+ + jiter==0.16.0
+ + joblib==1.5.3
+ + jsonschema==4.26.0
+ + jsonschema-specifications==2025.9.1
+ + lark==1.3.1
+ + lxml==5.4.0
+ + markdown-it-py==4.2.0
+ + markupsafe==3.0.3
+ + mdurl==0.1.2
+ + multidict==6.7.1
+ + networkx==3.6.1
+ + nltk==3.9.4
+ + numpy==2.5.0
+ + openai==2.44.0
+ + packaging==26.2
+ + patchright==1.61.1
+ + pillow==12.3.0
+ + playwright==1.61.0
+ + playwright-stealth==2.0.3
+ + propcache==0.5.2
+ + psutil==7.2.2
+ + pycparser==3.0
+ + pydantic==2.13.4
+ + pydantic-core==2.46.4
+ + pyee==13.0.1
+ + pygments==2.20.0
+ + pyopenssl==26.3.0
+ + python-dotenv==1.2.2
+ + pyyaml==6.0.3
+ + rank-bm25==0.2.2
+ + referencing==0.37.0
+ + regex==2026.6.28
+ + requests==2.34.2
+ + rich==15.0.0
+ + rpds-py==2026.6.3
+ + rtree==1.4.1
+ + scipy==1.18.0
+ + shapely==2.1.2
+ + shellingham==1.5.4
+ + sniffio==1.3.1
+ + snowballstemmer==2.2.0
+ + soupsieve==2.8.4
+ + tiktoken==0.13.0
+ + tokenizers==0.23.1
+ + tqdm==4.68.3
+ + trimesh==4.12.2
+ + typer==0.25.1
+ + typing-extensions==4.16.0
+ + typing-inspection==0.4.2
+ + unclecode-litellm==1.81.13
+ + urllib3==2.7.0
+ + xxhash==3.8.0
+ + yarl==1.24.2
+ + zipp==4.1.0
+[crawl4ai] Downloading browser (Playwright/Chromium)…
+  $ /Users/romek/Github/bdos-ai-extensions/crawl4ai/.venv/bin/crawl4ai-setup
+[INIT].... → Running post-installation setup... 
+[INIT].... → Installing Playwright browsers... 
+Downloading Chrome for Testing 149.0.7827.55 (playwright chromium v1228)[2m from https://cdn.playwright.dev/builds/cft/149.0.7827.55/mac-arm64/chrome-mac-arm64.zip[22m
+|                                                                                |   0% of 171 MiB
+|■■■■■■■■                                                                        |  10% of 171 MiB
+|■■■■■■■■■■■■■■■■                                                                |  20% of 171 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  30% of 171 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                                |  40% of 171 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  50% of 171 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  60% of 171 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  70% of 171 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  80% of 171 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■        |  90% of 171 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 171 MiB
+Chrome for Testing 149.0.7827.55 (playwright chromium v1228) downloaded to /Users/romek/Library/Caches/ms-playwright/chromium-1228
+Downloading FFmpeg (playwright ffmpeg v1011)[2m from https://cdn.playwright.dev/dbazure/download/playwright/builds/ffmpeg/1011/ffmpeg-mac-arm64.zip[22m
+|                                                                                |   1% of 1 MiB
+|■■■■■■■■                                                                        |  10% of 1 MiB
+|■■■■■■■■■■■■■■■■                                                                |  20% of 1 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  30% of 1 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                                |  40% of 1 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  50% of 1 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  60% of 1 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  71% of 1 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  80% of 1 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■        |  90% of 1 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 1 MiB
+FFmpeg (playwright ffmpeg v1011) downloaded to /Users/romek/Library/Caches/ms-playwright/ffmpeg-1011
+Downloading Chrome Headless Shell 149.0.7827.55 (playwright chromium-headless-shell v1228)[2m from https://cdn.playwright.dev/builds/cft/149.0.7827.55/mac-arm64/chrome-headless-shell-mac-arm64.zip[22m
+|                                                                                |   0% of 93.5 MiB
+|■■■■■■■■                                                                        |  10% of 93.5 MiB
+|■■■■■■■■■■■■■■■■                                                                |  20% of 93.5 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  30% of 93.5 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                                |  40% of 93.5 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  50% of 93.5 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  60% of 93.5 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  70% of 93.5 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  80% of 93.5 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■        |  90% of 93.5 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 93.5 MiB
+Chrome Headless Shell 149.0.7827.55 (playwright chromium-headless-shell v1228) downloaded to /Users/romek/Library/Caches/ms-playwright/chromium_headless_shell-1228
+[COMPLETE] ● Playwright installation completed successfully. 
+[INIT].... → Installing Patchright browsers for undetected mode... 
+Downloading Chrome for Testing 149.0.7827.55 (playwright chromium v1228)[2m from https://cdn.playwright.dev/builds/cft/149.0.7827.55/mac-arm64/chrome-mac-arm64.zip[22m
+|                                                                                |   0% of 171 MiB
+|■■■■■■■■                                                                        |  10% of 171 MiB
+|■■■■■■■■■■■■■■■■                                                                |  20% of 171 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  30% of 171 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                                |  40% of 171 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  50% of 171 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  60% of 171 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  70% of 171 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  80% of 171 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■        |  90% of 171 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 171 MiB
+Chrome for Testing 149.0.7827.55 (playwright chromium v1228) downloaded to /Users/romek/Library/Caches/ms-playwright/chromium-1228
+Downloading FFmpeg (playwright ffmpeg v1011)[2m from https://cdn.playwright.dev/dbazure/download/playwright/builds/ffmpeg/1011/ffmpeg-mac-arm64.zip[22m
+|                                                                                |   1% of 1 MiB
+|■■■■■■■■                                                                        |  10% of 1 MiB
+|■■■■■■■■■■■■■■■■                                                                |  20% of 1 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  30% of 1 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                                |  40% of 1 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  50% of 1 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  60% of 1 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  71% of 1 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  80% of 1 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■        |  90% of 1 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 1 MiB
+FFmpeg (playwright ffmpeg v1011) downloaded to /Users/romek/Library/Caches/ms-playwright/ffmpeg-1011
+Downloading Chrome Headless Shell 149.0.7827.55 (playwright chromium-headless-shell v1228)[2m from https://cdn.playwright.dev/builds/cft/149.0.7827.55/mac-arm64/chrome-headless-shell-mac-arm64.zip[22m
+|                                                                                |   0% of 93.5 MiB
+|■■■■■■■■                                                                        |  10% of 93.5 MiB
+|■■■■■■■■■■■■■■■■                                                                |  20% of 93.5 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■                                                        |  30% of 93.5 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                                |  40% of 93.5 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                        |  50% of 93.5 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                                |  60% of 93.5 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                        |  70% of 93.5 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■                |  80% of 93.5 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■        |  90% of 93.5 MiB
+|■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■| 100% of 93.5 MiB
+Chrome Headless Shell 149.0.7827.55 (playwright chromium-headless-shell v1228) downloaded to /Users/romek/Library/Caches/ms-playwright/chromium_headless_shell-1228
+[COMPLETE] ● Patchright installation completed successfully. 
+[INIT].... → Starting database initialization... 
+[COMPLETE] ● Database initialization completed successfully. 
+[COMPLETE] ● Post-installation setup completed! 
+[crawl4ai] Smoke test (crwl --help)…
+RESULT: {'ok': True, 'crwl': '/Users/romek/Github/bdos-ai-extensions/crawl4ai/.venv/bin/crwl', 'already': False}

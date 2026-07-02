@@ -1,0 +1,38 @@
+name: CI
+
+# Tests the crawl4ai extension on BOTH macOS and Windows without owning either machine —
+# GitHub provides the runners. This is how we verify Windows compatibility.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Unit test — path resolution (no browser needed)
+        run: python -m unittest discover -s tests -v
+
+      - name: Install crawl4ai (venv + Chromium)
+        run: python bootstrap_install.py
+
+      - name: Smoke test — scrape example.com
+        run: python smoke_test.py
