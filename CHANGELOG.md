@@ -2,6 +2,13 @@
 
 All notable changes to this repo. Dates are ISO (YYYY-MM-DD).
 
+## 2026-07-02 — repo `0.2.1`
+
+### Removed
+- **keyword_cluster: dropped `hdbscan` entirely** — unused after the 0.2.0 cosine-threshold
+  rewrite. Removed `cluster_graph.hdbscan_cluster()`, its test, and the `hdbscan` heavy-venv dep.
+  UMAP stays for the `viz=True` 2D scatter.
+
 ## 2026-07-02 — repo `0.2.0`
 
 ### Changed
