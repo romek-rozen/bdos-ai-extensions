@@ -95,5 +95,28 @@ class TestClusterApi(unittest.TestCase):
         self.assertFalse(r["ok"])
 
 
+import os  # noqa: E402
+from keyword_cluster.embed import load_config  # noqa: E402
+
+
+class TestConfig(unittest.TestCase):
+    def test_defaults_and_override(self):
+        cfg = load_config({"provider": "ollama", "model": "qwen3-embedding:4b"})
+        self.assertEqual(cfg["provider"], "ollama")
+        self.assertEqual(cfg["model"], "qwen3-embedding:4b")
+
+    def test_key_from_env_not_yaml(self):
+        os.environ["OPENROUTER_API_KEY"] = "sk-test-123"
+        try:
+            cfg = load_config({"provider": "openrouter"})
+            self.assertEqual(cfg["api_key"], "sk-test-123")
+        finally:
+            del os.environ["OPENROUTER_API_KEY"]
+
+    def test_ollama_needs_no_key(self):
+        cfg = load_config({"provider": "ollama"})
+        self.assertIsNone(cfg["api_key"])
+
+
 if __name__ == "__main__":
     unittest.main()
