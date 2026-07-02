@@ -77,11 +77,16 @@ page"*, *"is it worth scaling this campaign?"* — the matching skill triggers a
 
 ## Updating
 
-**Easiest — no terminal knowledge needed.** Just ask the assistant in a BDOS session:
+**Easiest — no terminal knowledge needed.** The assistant checks for new versions at the
+start of a session and offers to update when there's something new — just say *"yes"*. You
+can also ask any time:
 
 > Update the bdos-ai-extensions
 
 It runs the steps below for you (`git pull`, re-link, `bdos update --regenerate`).
+
+**Just want to check?** Run `bash ~/Github/bdos-ai-extensions/update.sh --check` — it tells
+you the installed version and whether updates are available, without changing anything.
 
 **One command (macOS / Linux)** — a ready-made script that does all three steps and prints
 plain-Polish progress (works whether you installed with symlink or `--copy`):

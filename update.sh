@@ -22,6 +22,39 @@ set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$HERE"
 
+# --- Optional: just check for updates and exit (bash update.sh --check) -------
+if [ "${1:-}" = "--check" ]; then
+  PY=""
+  for cand in python3 python; do
+    if command -v "$cand" >/dev/null 2>&1; then PY="$cand"; break; fi
+  done
+  if [ -z "$PY" ]; then
+    echo "❌ No Python found (python3/python). Install Python 3.12+ and try again."
+    exit 1
+  fi
+  "$PY" - "$HERE" <<'PYCHECK'
+import json
+import sys
+sys.path.insert(0, sys.argv[1])
+import updates
+
+info = updates.check_update(force=True)
+behind = info.get("behind", 0)
+version = info.get("version", "?")
+print("")
+print("=== bdos-ai-extensions — update check ===")
+print(f"Installed version: {version}")
+if behind and behind > 0:
+    print(f"⬆  Updates available: {behind} commit(s) behind on '{info.get('branch','main')}'.")
+    print("   To update, run:  bash update.sh")
+    print("   Changelog:       CHANGELOG.md")
+else:
+    print("✔  Everything is up to date.")
+print("")
+PYCHECK
+  exit 0
+fi
+
 echo ""
 echo "=== Updating bdos-ai-extensions ==="
 echo "Directory: $HERE"

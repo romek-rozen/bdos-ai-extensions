@@ -164,9 +164,14 @@ everything lives under `my/`, which `bdos update` never overwrites.
 
 ### Update it later
 
-Easiest — ask the assistant in a BDOS session: *"Update the bdos-ai-extensions"*.
-Or run the one-command updater (macOS/Linux): `bash update.sh`. Details:
-[Getting Started → Updating](docs/GETTING_STARTED.md#updating).
+The assistant checks for new versions at the start of a session and tells you when an update
+is available — just say *"yes"* and it runs the updater for you. You can also:
+
+- ask any time: *"Update the bdos-ai-extensions"*,
+- run the one-command updater (macOS/Linux): `bash update.sh`,
+- just check without updating: `bash update.sh --check`.
+
+Details: [Getting Started → Updating](docs/GETTING_STARTED.md#updating).
 
 ### Use it
 

@@ -3,6 +3,9 @@ crawl4ai/.venv/
 # Crawl outputs & cache
 crawl4ai/outputs/
 crawl4ai/.crawl4ai/
+# update check cache (local, per-machine)
+.update_check.json
+
 # Python
 __pycache__/
 *.pyc
@@ -31,7 +34,6 @@ keyword_cluster/.env
 .claude/
 
 # whitening backgrounds — large matrices stay local
-keyword_cluster/backgrounds/**/*.npy
 
 # embedding cache (local, per-machine)
 keyword_cluster/cache/

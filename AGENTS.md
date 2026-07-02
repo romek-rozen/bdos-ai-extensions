@@ -43,6 +43,25 @@ redirect chains is its whole point.
 | Cluster keyword-research output into ad groups | `keyword_cluster` | `cluster(keywords, ...)` |
 | Keyword volume+CPC, ideas, SERP, competitor ads, Shopping (DataForSEO) | `d4s` | `search_volume(...)`, `Client().call(path, payload)` |
 
+## Update checks
+
+At the **start of a session** run a quick, best-effort update check (a short 1h cache handles
+the rate limiting for you, so hotfixes surface fast) and, if there is anything new, tell the
+user in plain language:
+
+```python
+import sys
+sys.path.insert(0, "/Users/romek/Github/bdos-ai-extensions")  # repo root (adjust if elsewhere)
+from updates import check_update
+info = check_update()  # {ok, behind, version, branch, ...}; never raises
+```
+
+If `info["behind"] > 0`, say something human like: *"Są aktualizacje rozszerzeń (N commitów,
+wersja X). Zaktualizować? Odpalę `bash update.sh`."* On a "yes", run `bash update.sh`.
+**Never do a silent `git pull`** — a breaking change mid-session is worse than a stale tool.
+`.env`, caches and backgrounds are gitignored, so an update won't touch the user's local state.
+`check_update()` uses only stdlib and runs on the BDOS venv.
+
 ## Per-extension notes
 
 - **crawl4ai** — `scrape(url, fit=False)`, `deep_crawl(url, strategy="bfs", max_pages=10)`,

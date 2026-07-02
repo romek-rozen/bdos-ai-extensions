@@ -5,6 +5,9 @@ All notable changes to this repo. Dates are ISO (YYYY-MM-DD).
 ## 2026-07-02
 
 ### Added
+- **Update check** — `updates.check_update()` (commit-based, BDOS-style, throttled 1h,
+  fully best-effort) + `bash update.sh --check` and `AGENTS.md` guidance so the agent can
+  notify the user about new versions. Repo version tracked in `VERSION` (`0.1.0`).
 - **crawl4ai** (`ext-crawl4ai`) — browser-based scraping/crawling/extraction in a dedicated
   venv; `fetch_html()` shared human-like fetch layer for the other tools.
 - **landing_audit** (`ext-landing-audit`) — landing-page audit for Ads quality + sales-copy
