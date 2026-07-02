@@ -99,6 +99,18 @@ vs-average deltas, and optional GA4 engagement columns. Pure Python; fed with BD
 - **Note:** GA4 has no per-search-term dimension, so the GA4 engagement columns are
   *best-effort* — only populated if you pass a `{term: {...}}` mapping; otherwise omitted.
 
+### `keyword_cluster/` — cluster keyword ideas into ad groups
+
+Turns the flat output of `bdos-keyword-research` (100s of Keyword Planner ideas + metrics)
+into themed, **ad-group-ready clusters** — each with rolled-up volume/CPC/competition, a
+representative keyword, and a suggested ad-group name + match type. Three tiers, auto-selected:
+lexical (stdlib, zero install), fuzzy (`rapidfuzz`), and semantic (embeddings + HDBSCAN in an
+isolated heavy venv). Read-only.
+
+- `cluster(keywords, method="auto", ...)` → `clusters[]` + `noise[]` (+ optional UMAP viz)
+- `install()` / `status()` — one-time isolated heavy venv for the semantic tier
+- Skill: `ext-keyword-cluster`
+
 ## Install into BDOS
 
 ### Easiest — inside a BDOS session

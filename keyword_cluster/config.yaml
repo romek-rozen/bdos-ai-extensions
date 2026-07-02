@@ -1,0 +1,15 @@
+# keyword_cluster/config.yaml
+# Non-secret embedding configuration. API KEYS DO NOT GO HERE — see .env.example.
+#
+# Pick ONE provider below and set its model. You only need an API key for the
+# provider you choose (paste it into .env — see .env.example). Ollama needs none.
+#
+# Recommended models per provider:
+#   openrouter: qwen/qwen3-embedding-8b        (strong multilingual, default)
+#   openai:     text-embedding-3-large         (alt: text-embedding-3-small, cheaper)
+#   ollama:     qwen3-embedding:4b             (alt: :8b 4.7GB, :0.6b 639MB for weak hardware)
+
+provider: openrouter          # openrouter | openai | ollama
+model: qwen/qwen3-embedding-8b # OpenRouter default (strong multilingual)
+base_url: ""                  # blank = provider default endpoint
+dim: 0                        # 0 = model default; set to MRL-truncate (e.g. 1536)

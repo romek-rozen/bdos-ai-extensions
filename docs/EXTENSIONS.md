@@ -4,7 +4,7 @@ Every public function returns a dict (or list of dicts) with an `ok` key; on fai
 `{"ok": False, "error": "..."}`. Import paths shown are the in-BDOS paths
 (`my.extensions.<package>`). Run with the BDOS venv Python.
 
-Contents: [crawl4ai](#crawl4ai) · [landing_audit](#landing_audit) · [schema_check](#schema_check)
+Contents: [crawl4ai](#crawl4ai) · [landing_audit](#landing_audit) · [schema_check](#schema_check) · [keyword_cluster](#keyword_cluster)
 · [url_health](#url_health) · [page_monitor](#page_monitor) · [content_compare](#content_compare)
 · [marginal_ers](#marginal_ers) · [ngram_pro](#ngram_pro)
 
@@ -177,3 +177,40 @@ with `target_roas` → `cost − conv_value/target_roas`; else `cost` (0 conv) o
 are optional/best-effort (GA4 has no per-search-term dimension) — pass `ga4_by_term` only if
 you can map terms to sessions. Hand chosen negatives to the mutation workflow; never exclude
 from here.
+
+---
+
+## keyword_cluster
+
+Groups a flat list of keyword ideas into **ad-group-ready clusters**. Runs **after** the core
+`bdos-keyword-research` skill: it takes 100s of Keyword Planner ideas (+ volume/CPC/competition)
+and returns themed clusters with rolled-up metrics and a suggested Ads structure. Read-only.
+
+```python
+from my.extensions.keyword_cluster import cluster
+cluster([
+    {"text": "running shoes", "avg_monthly_searches": 5400, "cpc_low": 0.4, "cpc_high": 1.1, "competition": "HIGH"},
+    {"text": "trail running shoes", "avg_monthly_searches": 1300},
+    {"text": "hiking boots", "avg_monthly_searches": 2900},
+])
+```
+
+Three tiers, auto-selected via `method="auto"`: **lexical** (stdlib, zero install) → **fuzzy**
+(`rapidfuzz`) → **semantic** (embeddings + HDBSCAN in an isolated heavy venv). It degrades
+gracefully — check `method_used` to see which ran. The semantic tier needs a one-time
+`install()` (isolated venv with its own numpy, never touches the BDOS venv), a provider in
+`config.yaml`, and a key in `.env` (copy `.env.example`; Ollama needs none but `ollama pull
+qwen3-embedding:4b`). Providers: openrouter `qwen/qwen3-embedding-8b`, openai
+`text-embedding-3-large`/`-small`, ollama `qwen3-embedding:4b`/`:8b`/`:0.6b`.
+
+`cluster(keywords, *, method="auto", threshold=None, min_cluster_size=2, provider=None,
+model=None, whitening="batch", viz=False, whitening_background=None)` → `ok, method_used,
+clusters[], noise[], viz_path`. Each cluster: `cluster_id, label, members[], size,
+total_volume, avg_cpc, dominant_competition, representative_keyword, suggested_ad_group,
+suggested_match_type`. `keywords` items are strings or dicts with `text` + optional
+`avg_monthly_searches, cpc_low, cpc_high, competition`.
+
+Batch **ZCA whitening** (default `whitening="batch"`) fixes embedding anisotropy — the "all
+cosines look 0.7" effect — so related keywords separate cleanly. `install()`/`status()` from
+`my.extensions.keyword_cluster.install` manage the heavy venv. Skill: `ext-keyword-cluster`.
+Read-only — hand the suggested ad-group structure to the mutation workflow.
