@@ -134,6 +134,25 @@ sets use the fallback so they still cluster). Embeddings are **cached** in a loc
 (`keyword_cluster/cache/`, gitignored) keyed by `(provider, model, dim, text)`, so repeated
 keywords are never re-embedded — first run is slow, re-runs are near-instant.
 
+## Naming & review — YOUR job (the LLM layer)
+
+The extension does the **deterministic** part: fetch → cluster → aggregate metrics. It ships a
+rough `suggested_ad_group` label (most common tri/bigram, de-duplicated) as a *fallback only*.
+The judgement part is yours — after `cluster()`, read each cluster's `members` and:
+
+1. **Name each group** from its members (a clean ad-group name), instead of trusting
+   `suggested_ad_group`. E.g. members `["rower dla 3 latka", "rower dla 5 latka", …]` →
+   "Rowery dla dzieci wg wieku".
+2. **Flag off-topic clusters** that leaked in from keyword expansion (e.g. a "dresy/odzież"
+   group inside a bikes account) — recommend excluding them.
+3. **Flag navigational / marketplace / store-locator groups** (e.g. "decathlon <miasto>",
+   "olx …") — these are not product ad groups; suggest a separate campaign or negatives.
+4. **Reconsider granularity** for the account's strategy: merge near-duplicates, or split a
+   catch-all, and (optionally) separate by intent using `d4s.search_intent`.
+
+Clustering is a scaffold; you turn it into the ad-group structure the user reviews and hands to
+the BDOS mutation workflow. Present a table (group name · #kw · volume · avg CPC · match type).
+
 ## Gotchas
 
 - `method="auto"` silently degrades to lexical/fuzzy when the semantic prerequisites are

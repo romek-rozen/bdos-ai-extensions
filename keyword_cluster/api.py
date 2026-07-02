@@ -1,7 +1,7 @@
 """Public entry point: cluster()."""
 from .similarity import lexical_similarity, fuzzy_similarity, has_rapidfuzz
 from .cluster_graph import union_find_cluster
-from .label import build_cluster
+from .label import build_cluster, dedupe_labels
 from .install import venv_python
 from .embed import embed
 
@@ -99,6 +99,7 @@ def _semantic_cluster(members, *, min_cluster_size, provider, model, whitening, 
         else:
             groups.setdefault(lab, []).append(members[i])
     clusters = [build_cluster(cid, grp) for cid, grp in enumerate(groups.values())]
+    dedupe_labels(clusters)
     clusters.sort(key=lambda c: (c["total_volume"] or 0, c["size"]), reverse=True)
     viz_path = None
     if viz:
@@ -141,5 +142,6 @@ def cluster(keywords, *, method="auto", threshold=None, min_cluster_size=2,
         if len(group) < min_cluster_size:
             continue
         clusters.append(build_cluster(cid, [members[i] for i in group]))
+    dedupe_labels(clusters)
     clusters.sort(key=lambda c: (c["total_volume"] or 0, c["size"]), reverse=True)
     return {"ok": True, "method_used": resolved, "clusters": clusters, "noise": [], "viz_path": None}

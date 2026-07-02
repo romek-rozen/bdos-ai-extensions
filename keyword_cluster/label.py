@@ -15,19 +15,43 @@ def _label(members) -> str:
     keyword. This is a sensible default; a skill/LLM renames it from the members.
     """
     toks = [tokens(m["text"]) for m in members]
-    bigrams = Counter()
-    for t in toks:
-        bigrams.update(set(zip(t, t[1:])))  # per-member set → count members, not repeats
-    if bigrams:
-        (a, b), cnt = bigrams.most_common(1)[0]
-        if cnt >= 2:
-            return f"{a} {b}"
+    # Prefer the longest n-gram shared by >=2 members: trigram, then bigram.
+    for n in (3, 2):
+        grams = Counter()
+        for t in toks:
+            grams.update(set(zip(*(t[i:] for i in range(n)))))  # per-member set
+        if grams:
+            gram, cnt = grams.most_common(1)[0]
+            if cnt >= 2:
+                return " ".join(gram)
     unigrams = Counter()
     for t in toks:
         unigrams.update(set(t))
     if unigrams:
         return unigrams.most_common(1)[0][0]
     return _representative(members)
+
+
+def dedupe_labels(clusters):
+    """Make cluster labels unique across the result set.
+
+    Two clusters can share a bag-of-phrases label ("rower damski" for both a
+    Kellys group and a trekking group). For any collision, append the most
+    distinctive token not already in the label so the fallback names differ.
+    (A skill/LLM still produces the final human names from the members.)
+    """
+    counts = Counter(c["label"] for c in clusters)
+    for c in clusters:
+        if counts[c["label"]] > 1:
+            base = set(c["label"].split())
+            freq = Counter()
+            for text in c["members"]:
+                freq.update(set(tokens(text)))
+            extra = next((w for w, _ in freq.most_common() if w not in base), None)
+            if extra:
+                c["label"] = f"{c['label']} {extra}"
+                c["suggested_ad_group"] = c["label"].title()
+    return clusters
 
 
 def _representative(members) -> str:
