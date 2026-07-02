@@ -1,6 +1,9 @@
 """Pluggable embedding providers + config/.env loading."""
+import json
 import os
 import pathlib
+import urllib.error
+import urllib.request
 
 _PKG_DIR = pathlib.Path(__file__).resolve().parent
 _CONFIG = _PKG_DIR / "config.yaml"
@@ -43,3 +46,59 @@ def load_config(overrides: dict | None = None) -> dict:
     key_var = _KEY_ENV.get(provider)
     cfg["api_key"] = os.environ.get(key_var) if key_var else None
     return cfg
+
+
+def _http_post_json(url: str, payload: dict, headers: dict, timeout: int = 120) -> dict:
+    """POST JSON and return the parsed JSON response. Raises RuntimeError on HTTP/URL errors."""
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json", **headers},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        raise RuntimeError(
+            f"embedding provider HTTP {e.code}: {e.read().decode('utf-8', 'ignore')[:500]}"
+        ) from e
+    except urllib.error.URLError as e:
+        raise RuntimeError(f"embedding provider unreachable: {e.reason} ({url})") from e
+
+
+def _embed_openai_compatible(texts, cfg):
+    """OpenRouter + OpenAI share the OpenAI-style /embeddings schema."""
+    if not cfg["api_key"]:
+        raise RuntimeError(
+            f"missing API key for {cfg['provider']}; set it in keyword_cluster/.env"
+        )
+    payload = {"model": cfg["model"], "input": texts}
+    if cfg["dim"]:
+        payload["dimensions"] = cfg["dim"]
+    data = _http_post_json(
+        f"{cfg['base_url']}/embeddings",
+        payload,
+        {"Authorization": f"Bearer {cfg['api_key']}"},
+    )
+    return [row["embedding"] for row in data["data"]]
+
+
+def _embed_ollama(texts, cfg):
+    """Ollama /api/embed schema (no API key)."""
+    data = _http_post_json(
+        f"{cfg['base_url']}/api/embed", {"model": cfg["model"], "input": texts}, {}
+    )
+    return data["embeddings"]
+
+
+def embed(texts, *, provider=None, model=None, base_url=None, dim=None, batch_size=256):
+    """Embed a list of texts via the configured provider; returns a flat list of vectors."""
+    cfg = load_config(
+        {"provider": provider, "model": model, "base_url": base_url, "dim": dim}
+    )
+    fn = _embed_ollama if cfg["provider"] == "ollama" else _embed_openai_compatible
+    vecs = []
+    for i in range(0, len(texts), batch_size):
+        vecs.extend(fn(texts[i:i + batch_size], cfg))
+    return vecs
