@@ -26,5 +26,24 @@ class TestSimilarity(unittest.TestCase):
         self.assertEqual(lexical_similarity("abc", "abc"), 1.0)
         self.assertLess(lexical_similarity("cat", "dog"), 0.5)
 
+from keyword_cluster.cluster_graph import union_find_cluster  # noqa: E402
+from keyword_cluster.similarity import lexical_similarity  # noqa: E402
+
+
+class TestUnionFind(unittest.TestCase):
+    def test_groups_similar_and_isolates_different(self):
+        texts = ["buty trekkingowe", "trekkingowe buty tanie", "rower gorski"]
+        groups = union_find_cluster(texts, lexical_similarity, threshold=0.5)
+        # first two merge, third is its own singleton
+        sizes = sorted(len(g) for g in groups)
+        self.assertEqual(sizes, [1, 2])
+
+    def test_every_index_present_once(self):
+        texts = ["a", "b", "c"]
+        groups = union_find_cluster(texts, lexical_similarity, threshold=0.9)
+        flat = sorted(i for g in groups for i in g)
+        self.assertEqual(flat, [0, 1, 2])
+
+
 if __name__ == "__main__":
     unittest.main()
