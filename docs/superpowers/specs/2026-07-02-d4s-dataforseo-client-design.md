@@ -17,10 +17,18 @@ handed to the BDOS mutation workflow.
 ## Non-goals (v1)
 
 - No wrapping/duplication of MCP orchestration — the extension is a plain HTTP client.
-- No task/queue mode — **live endpoints only** (immediate results).
 - No pip dependencies — standard library only (`urllib`, `base64`, `json`).
 - Backlinks, On-Page, ranked_keywords, domain_rank_overview are reachable via the generic
   `call()`; dedicated wrappers deferred to v2.
+
+## Call modes
+
+- **Live preferred.** Most wrappers hit `/live/` endpoints (immediate results).
+- **Task mode supported.** Some endpoints have no `live` variant (notably Google Ads
+  Transparency: `ads_search`, `ads_advertisers`). The client provides a `task()` helper that
+  does `task_post` → poll `task_get` → return, with a bounded timeout and poll interval. On
+  timeout: `{"ok": False, "error": "task timeout", "task_id": ...}` so the caller can retry
+  the get later.
 
 ## Credentials
 
@@ -40,10 +48,12 @@ Base URL: `https://api.dataforseo.com` (overridable via arg/env `DATAFORSEO_BASE
 ```
 d4s/
   __init__.py       # re-export public API + __version__ = "0.1.0"
-  d4s_client.py     # core: auth, call(), retry, pagination, envelope unpacking
-  d4s_kw_ads.py     # Keywords Data / Google Ads wrappers
+  d4s_client.py     # core: auth, call() [live], task() [post→poll→get], retry, envelope
+  d4s_kw_ads.py     # Keywords Data / Google Ads wrappers (+ Google Trends)
   d4s_labs.py       # DataForSEO Labs wrappers
-  d4s_serp.py       # SERP wrappers
+  d4s_serp.py       # SERP wrappers (+ autocomplete)
+  d4s_ads_intel.py  # Google Ads Transparency (ads_search, ads_advertisers) — task mode
+  d4s_merchant.py   # Google Shopping / Merchant wrappers
   d4s_meta.py       # locations / languages helpers
 skills/ext-d4s/
   SKILL.md          # when/how the agent uses d4s (Ads/SEO context)
@@ -55,8 +65,11 @@ Paths computed relative to `__file__` for portability. No local state written.
 ## Core client (`d4s_client.py`)
 
 - **Auth:** HTTP Basic from env vars above; `Authorization: Basic base64(user:pass)`.
-- **Generic `call(path, payload=None, method="POST")`** — hits ANY DataForSEO endpoint,
+- **Generic `call(path, payload=None, method="POST")`** — hits ANY live DataForSEO endpoint,
   e.g. `call("/v3/dataforseo_labs/google/keyword_ideas/live", [{...}])`.
+- **`task(base_path, payload, timeout=..., interval=...)`** — for endpoints without a `live`
+  variant: POSTs to `{base_path}/task_post`, polls `{base_path}/task_get/advanced/{id}` until
+  ready or timeout, returns the same envelope shape as `call()`.
 - **Retry** with capped exponential backoff on 429 / 5xx (fixed max attempts, stdlib only).
 - **Envelope handling:** returns
   `{"ok": True, "cost": <float>, "tasks": [...], "result": [...], "raw": {<full body>}}`
@@ -75,6 +88,8 @@ All wrappers build the DataForSEO payload and delegate to `call()`; all return a
 - `keywords_for_keywords(keywords, location, language)` — expand from seeds
 - `ad_traffic_by_keywords(keywords, bid, match, location, language)` — estimate
   impressions/clicks/cost at a given bid (Ads budget planning)
+- `google_trends(keywords, location, language, time_range=None)` — demand seasonality over
+  time (`/v3/keywords_data/google_trends/explore/live`)
 
 ### `d4s_labs.py` — DataForSEO Labs (priority 2, SEO/intent context)
 - `keyword_ideas(keywords, location, language)`
@@ -85,6 +100,17 @@ All wrappers build the DataForSEO payload and delegate to `call()`; all return a
 ### `d4s_serp.py` — SERP (priority 3, competitor context)
 - `serp(keyword, location, language)` — organic live advanced
 - `serp_competitors(keywords, location, language)`
+- `autocomplete(keyword, location, language)` — Google autocomplete suggestions (live)
+
+### `d4s_ads_intel.py` — Google Ads Transparency (competitor ad research, **task mode**)
+- `ads_advertisers(keyword=None, target=None)` — find advertisers in the Transparency Center
+  (returns `advertiser_id`s)
+- `ads_search(advertiser_id, target=None)` — live ad creatives an advertiser is running
+  (desktop/windows only). Uses the client `task()` helper.
+
+### `d4s_merchant.py` — Google Shopping / Merchant (Shopping/PLA campaigns)
+- `products(keyword, location, language)` — Shopping products, prices, sellers
+- `sellers(keyword, location, language)` — competing sellers for a product query
 
 ### `d4s_meta.py` — helpers (frequent friction point)
 - `locations(country=None)` — resolve `location_code`
@@ -108,6 +134,8 @@ Pure, offline, CI-safe (macOS + Windows `unittest discover`):
 - Envelope unpacking: success flattening, `cost`, `raw` preserved.
 - Error paths: missing credentials, non-20000 status → `{"ok": False, ...}`.
 - Retry logic via injected transport (simulate 429 then 200).
+- Task mode: `task()` posts, polls a "not ready" then a "ready" response, returns result;
+  and hits the timeout path → `{"ok": False, "error": "task timeout", ...}`.
 No network calls.
 
 ## README / docs
