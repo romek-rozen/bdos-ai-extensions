@@ -162,6 +162,12 @@ truth, so `git pull` updates BDOS instantly with no duplicate copies to sync. Us
 if you'd rather have plain files (then re-run the script after each `git pull`). Either way,
 everything lives under `my/`, which `bdos update` never overwrites.
 
+### Update it later
+
+Easiest — ask the assistant in a BDOS session: *"Update the bdos-ai-extensions"*.
+Or run the one-command updater (macOS/Linux): `bash update.sh`. Details:
+[Getting Started → Updating](docs/GETTING_STARTED.md#updating).
+
 ### Use it
 
 Inside a BDOS session:

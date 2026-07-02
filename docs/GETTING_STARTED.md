@@ -77,6 +77,23 @@ page"*, *"is it worth scaling this campaign?"* — the matching skill triggers a
 
 ## Updating
 
+**Easiest — no terminal knowledge needed.** Just ask the assistant in a BDOS session:
+
+> Update the bdos-ai-extensions
+
+It runs the steps below for you (`git pull`, re-link, `bdos update --regenerate`).
+
+**One command (macOS / Linux)** — a ready-made script that does all three steps and prints
+plain-Polish progress (works whether you installed with symlink or `--copy`):
+
+```bash
+bash ~/Github/bdos-ai-extensions/update.sh
+```
+
+(adjust the path if you cloned the repo elsewhere).
+
+**Manual:**
+
 ```bash
 cd bdos-ai-extensions
 git pull

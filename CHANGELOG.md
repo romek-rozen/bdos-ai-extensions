@@ -29,6 +29,9 @@ All notable changes to this repo. Dates are ISO (YYYY-MM-DD).
   `search_intent`, `serp`, `serp_competitors`, `autocomplete`, `ads_advertisers`/`ads_search`
   (Ads Transparency), `products`/`sellers` (Shopping), `locations`/`languages`. Reads a
   `.env` file too; `creds_status()` reports readiness with plain-language next steps. Read-only.
+- **update.sh** — one-command updater for non-technical users (macOS/Linux): `git pull` →
+  re-link via `install_into_bdos.py` → `bdos update --regenerate`, with plain-language
+  progress and guidance on failure. Docs: a "Updating" section (ask-the-assistant + script).
 - **install_into_bdos.py** — one-command self-install (symlink/copy) into a BDOS `my/` dir.
   Auto-creates `.env` from `.env.example` for any extension that ships one (d4s,
   keyword_cluster) and prints a `🔑 API keys` checklist of which vars to fill in.
