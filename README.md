@@ -65,6 +65,16 @@ matching. Pure standard library, offline.
 - `analyze(url, keywords=[...])` / `compare(urls, keywords=[...])`
 - Skill: `ext-content-compare`
 
+### `marginal_ers/` — profit-driven bidding (marginal ERS)
+
+Decides whether to scale a campaign up or down by comparing its **marginal** Effective
+Revenue Share against break-even, using price elasticity of traffic (the "Zero-ROI"
+profit-driven model). Maximizing ROAS ≠ maximizing profit. Pure Python, no network.
+
+- `analyze(before, after)` — from two period snapshots → verdict + target ROAS (= 1 + 1/E)
+- `decide(current_ers, e)`, plus `elasticity/ers/roas/roi/marginal_ers/target_roas` helpers
+- Skill: `ext-marginal-ers`
+
 ## Install into BDOS
 
 ### Easiest — inside a BDOS session
